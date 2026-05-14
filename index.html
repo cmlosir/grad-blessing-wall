@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>畢業禮心意牆</title>
+    <style>
+        :root {
+            --bg-color: #eef2f3;
+            --memo-yellow: #fff9a0;
+            --memo-pink: #ffc2e2;
+            --memo-blue: #a2e1ff;
+        }
+
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; overflow: hidden; background: var(--bg-color); }
+        
+        /* 導覽切換 (僅供測試用) */
+        .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; }
+        .nav-debug button { cursor: pointer; padding: 5px 10px; }
+
+        .page { display: none; height: 100vh; width: 100vw; }
+        .active { display: block; }
+
+        /* --- 1. 輸入端樣式 --- */
+        #input-page { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .input-box { width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+        input, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        .send-btn { padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
+
+        /* --- 2. 大屏幕展示端樣式 --- */
+        #display-page { background: url('https://www.transparenttextures.com/patterns/white-wall.png'); position: relative; }
+        .wall-title { position: absolute; width: 100%; text-align: center; top: 20px; font-size: 2.5rem; color: #34495e; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); z-index: 10; }
+        
+        .memo {
+            position: absolute;
+            width: 180px;
+            min-height: 180px;
+            padding: 20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            word-wrap: break-word;
+        }
+        .memo p { margin: 0; font-size: 1.1rem; line-height: 1.4; color: #333; }
+        .memo span { text-align: right; font-size: 0.85rem; color: #666; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 5px; }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* --- 3. 管理員審核樣式 --- */
+        #admin-page { padding: 20px; overflow-y: auto; background: #fff; }
+        .admin-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .approve-btn { background: #27ae60; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- 測試用切換按鈕 -->
+    <div class="nav-debug">
+        <button onclick="showPage('input-page')">學生/家長輸入</button>
+        <button onclick="showPage('admin-page')">老師審核</button>
+        <button onclick="showPage('display-page')">大屏幕展示</button>
+    </div>
+
+    <!-- 1. 輸入頁面 -->
+    <div id="input-page" class="page active">
+        <h2>🎓 畢業禮心意牆</h2>
+        <p>為畢業同學送上祝福</p>
+        <div class="input-box">
+            <input type="text" id="senderName" placeholder="你的名字 / 班別" maxlength="15">
+            <textarea id="messageText" rows="4" placeholder="祝福說話 (限50字)..." maxlength="50"></textarea>
+            <button class="send-btn" onclick="submitMessage()">送出心意</button>
+        </div>
+    </div>
+
+    <!-- 2. 大屏幕展示頁面 -->
+    <div id="display-page" class="page">
+        <div class="wall-title">2026 畢業典禮：祝福牆</div>
+        <div id="wall-container"></div>
+    </div>
+
+    <!-- 3. 管理員頁面 -->
+    <div id="admin-page" class="page">
+        <h2>待審核留言</h2>
+        <div id="admin-list"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        // !!! 重要：請替換成你的 Firebase Config !!!
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
+
+        // --- 功能：切換頁面 ---
+        window.showPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        };
+
+        // --- 功能：輸入端送出 (存入 pending 資料夾) ---
+        window.submitMessage = () => {
+            const name = document.getElementById('senderName').value || "有心人";
+            const text = document.getElementById('messageText').value;
+            if(!text) return alert("請輸入內容");
+
+            push(ref(db, 'pending'), {
+                name: name,
+                text: text,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                time: Date.now()
+            }).then(() => {
+                alert("已送出，等待老師審核後顯示！");
+                document.getElementById('messageText').value = "";
+            });
+        };
+
+        // --- 功能：管理員監聽 pending 並審核 ---
+        onChildAdded(ref(db, 'pending'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+            const item = document.createElement('div');
+            item.className = 'admin-item';
+            item.id = `admin-${id}`;
+            item.innerHTML = `
+                <div><strong>${data.name}:</strong> ${data.text}</div>
+                <button class="approve-btn" onclick="approveMessage('${id}', ${JSON.stringify(data).replace(/"/g, '&quot;')})">批准</button>
+            `;
+            document.getElementById('admin-list').appendChild(item);
+        });
+
+        window.approveMessage = (id, data) => {
+            push(ref(db, 'approved'), data); // 搬到 approved
+            remove(ref(db, `pending/${id}`)); // 從 pending 刪除
+            document.getElementById(`admin-${id}`).remove();
+        };
+
+        // --- 功能：展示端監聽 approved 並顯示 ---
+        onChildAdded(ref(db, 'approved'), (snapshot) => {
+            const data = snapshot.val();
+            const memo = document.createElement('div');
+            memo.className = 'memo';
+            memo.style.backgroundColor = data.color;
+            
+            // 隨機位置與旋轉
+            const x = Math.random() * (window.innerWidth - 220);
+            const y = 100 + Math.random() * (window.innerHeight - 350);
+            const rot = (Math.random() - 0.5) * 20;
+            
+            memo.style.left = `${x}px`;
+            memo.style.top = `${y}px`;
+            memo.style.transform = `rotate(${rot}deg)`;
+            
+            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
+            document.getElementById('wall-container').appendChild(memo);
+            
+            // 如果太多留言，自動刪除舊的（可選）
+            if(document.querySelectorAll('.memo').length > 30) {
+                document.querySelector('.memo').remove();
+            }
+        });
+
+    </script>
+</body>
+</html>
