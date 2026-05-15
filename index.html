@@ -286,17 +286,61 @@
 
 
         // --- 功能：展示端監聽 approved 並顯示在牆上 ---
+
+// --- 功能：展示端監聽 approved 並顯示在牆上 (網格防重疊優化版) ---
+        
+        // 1. 定義網格參數 (根據 Memo 紙大小 180px + 20px padding 算)
+        const GRID_WIDTH = 240;  
+        const GRID_HEIGHT = 240; 
+        let occupiedSlots = []; // 用來紀錄邊些位置已經被佔用
+
         onChildAdded(ref(db, 'approved'), (snapshot) => {
             const data = snapshot.val();
             const memo = document.createElement('div');
             memo.className = 'memo';
             memo.style.backgroundColor = data.color;
             
-            // 計算大屏幕隨機位置
-            const x = Math.random() * (window.innerWidth - 220);
-            const y = 100 + Math.random() * (window.innerHeight - 350);
-            const rot = (Math.random() - 0.5) * 20;
+            // 2. 計算目前大屏幕可以容納幾多行同幾多列
+            const cols = Math.floor(window.innerWidth / GRID_WIDTH);
+            const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT); // 減去頂部標題空間
+            const totalSlots = cols * rows;
+
+            // 3. 搵出未被佔用嘅空位 (Slots)
+            let availableSlots = [];
+            for (let i = 0; i < totalSlots; i++) {
+                if (!occupiedSlots.includes(i)) {
+                    availableSlots.push(i);
+                }
+            }
+
+            // 4. 如果牆上貼滿咗，就清空最舊嘅紀錄，重新填滿
+            if (availableSlots.length === 0) {
+                occupiedSlots = []; 
+                document.getElementById('wall-container').innerHTML = ''; // 清空大屏幕
+                for (let i = 0; i < totalSlots; i++) availableSlots.push(i);
+            }
+
+            // 5. 隨機揀一個空嘅格子放進去
+            const randomSlotIndex = Math.floor(Math.random() * availableSlots.length);
+            const chosenSlot = availableSlots[randomSlotIndex];
+            occupiedSlots.push(chosenSlot); // 標記呢個位置已經有人用
+
+            // 6. 將格子編號轉回 X 和 Y 座標
+            const colIndex = chosenSlot % cols;
+            const rowIndex = Math.floor(chosenSlot / cols);
+
+            // 7. 加上少許微調 (Offset)，容許最多 1/4 的重疊，令畫面看起來更自然、不呆板
+            const maxOverlapX = GRID_WIDTH * 0.25;  // 最多重疊 1/4
+            const maxOverlapY = GRID_HEIGHT * 0.25; 
             
+            const offsetX = (Math.random() - 0.5) * maxOverlapX;
+            const offsetY = (Math.random() - 0.5) * maxOverlapY;
+
+            const x = colIndex * GRID_WIDTH + 20 + offsetX;
+            const y = rowIndex * GRID_HEIGHT + 120 + offsetY; // 120 是避開標題
+            const rot = (Math.random() - 0.5) * 15; // 隨機輕微旋轉
+
+            // 8. 套用樣式與內容
             memo.style.left = `${x}px`;
             memo.style.top = `${y}px`;
             memo.style.transform = `rotate(${rot}deg)`;
@@ -304,10 +348,11 @@
             memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
             document.getElementById('wall-container').appendChild(memo);
             
-            // 超過 30 張會自動把最舊的一張淡出移除，防止畫面過份擁擠
-            if(document.querySelectorAll('.memo').length > 30) {
+            // 限制畫面的總數目，維持大屏幕順暢
+            if(document.querySelectorAll('.memo').length > totalSlots) {
                 document.querySelector('.memo').remove();
             }
+      
         });
     </script>
 </body>
