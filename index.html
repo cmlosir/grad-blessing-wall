@@ -130,10 +130,7 @@
         .memo p { margin: 0; font-size: 1.1rem; line-height: 1.4; color: #333; }
         .memo span { text-align: right; font-size: 0.85rem; color: #666; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 5px; }
 
-        /* ---       @keyframes popIn {
-            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-            100% { opacity: 1; }
-        }   --- */
+
 
         @keyframes memoFadeUp {
             0% { 
@@ -196,14 +193,12 @@
         <div id="admin-approved-list"></div>
     </div>
 
-
-    <script type="module">
+<script type="module">
+        // 1. 確保這裡完整 import 咗 onChildRemoved，大屏幕先至會識得即時自動清走 Memo
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        // ========================================================
-        // !!! 重要：請在這裡填寫你自己的真實 Firebase Config !!!
-        // ========================================================
+        // !!! 重要：請填寫你自己的真實 Firebase Config !!!
         const firebaseConfig = {
              apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
               authDomain: "grad-message.firebaseapp.com",
@@ -220,7 +215,7 @@
         const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
         const ADMIN_PASSWORD = "ydss"; 
 
-        // --- 修正後的安全頁面切換功能 ---
+        // --- 頁面切換功能 ---
         function executePageChange(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById(id);
@@ -229,10 +224,8 @@
             }
         }
 
-        // 綁定導航按鈕點擊事件，避免 HTML 找不到 function
         document.getElementById('btn-goto-input').addEventListener('click', () => executePageChange('input-page'));
         document.getElementById('btn-goto-display').addEventListener('click', () => executePageChange('display-page'));
-        
         document.getElementById('btn-goto-admin').addEventListener('click', () => {
             const password = prompt("請輸入管理員密碼：");
             if (password === ADMIN_PASSWORD) {
@@ -259,16 +252,14 @@
             });
         });
 
-        // --- 功能：管理員監聽 pending 並動態生成審核列表 ---
-      
-// --- 功能：管理員監聽 pending 並動態生成審核列表 ---
+        // --- 功能：管理員監聽 pending (待審核) ---
         onChildAdded(ref(db, 'pending'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
             
             const item = document.createElement('div');
             item.className = 'admin-item';
-            item.id = `admin-pending-${id}`; // 加上 pending 標記
+            item.id = `admin-pending-${id}`;
             
             const textDiv = document.createElement('div');
             textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
@@ -277,18 +268,15 @@
             btnGroup.style.display = 'flex';
             btnGroup.style.gap = '10px';
 
-            // 批准按鈕
             const approveBtn = document.createElement('button');
             approveBtn.className = 'approve-btn';
             approveBtn.innerText = '批准';
             approveBtn.onclick = () => {
-                // 將資料搬去 approved，並附帶原本嘅時間印記，確保留言次序不變
                 push(ref(db, 'approved'), data); 
                 remove(ref(db, `pending/${id}`)); 
                 item.remove();
             };
             
-            // 拒絕按鈕
             const rejectBtn = document.createElement('button');
             rejectBtn.innerText = '拒絕';
             rejectBtn.style.background = '#e74c3c';
@@ -312,16 +300,15 @@
             document.getElementById('admin-list').appendChild(item);
         });
 
-        // --- 功能：管理員同時監聽 approved，生成「隨時下架」清單 ---
+        // --- 功能：管理員監聽 approved (已出街列表) ---
         onChildAdded(ref(db, 'approved'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
 
-            // 1. 在老師的「大屏幕現正顯示」列表中加一列
             const liveItem = document.createElement('div');
             liveItem.className = 'admin-item';
-            liveItem.id = `admin-approved-${id}`; // 用 approved ID 標記
-            liveItem.style.borderLeft = "5px solid #27ae60"; // 加條綠邊容易睇
+            liveItem.id = `admin-approved-${id}`;
+            liveItem.style.borderLeft = "5px solid #27ae60";
 
             const textDiv = document.createElement('div');
             textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
@@ -337,29 +324,39 @@
 
             removeBtn.onclick = () => {
                 if(confirm(`防手殘安全確認：\n確定要將 "${data.name}" 的留言從大屏幕【即時下架】並永久刪除嗎？`)) {
-                    remove(ref(db, `approved/${id}`)); // 從 Firebase 的 approved 刪除數據
-                    // 備註：大屏幕會收到下面的 remove 監聽，自動將 Memo 蒸發，這裡不用手動 delete 畫面
+                    remove(ref(db, `approved/${id}`)); // 這裡一刪除，下面兩個 onChildRemoved 就會即時觸發更新！
                 }
             };
 
             liveItem.appendChild(textDiv);
             liveItem.appendChild(removeBtn);
             document.getElementById('admin-approved-list').appendChild(liveItem);
+        });
 
-            // 2. 【大屏幕同步顯示】當有新 approved，在展示端生成 Memo 紙
+
+        // ========================================================
+        // 📺 大屏幕專用：實時監聽（免 Refresh、一秒同步關鍵）
+        // ========================================================
+
+        // 大屏幕：當有新留言被批准時，生成 Memo 紙貼上牆
+        onChildAdded(ref(db, 'approved'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+
+            // 如果已經存在同 ID 的 Memo，就不重複生成（防止老師開多個分頁時衝突）
+            if (document.getElementById(`memo-wall-${id}`)) return;
+
             const memo = document.createElement('div');
             memo.className = 'memo';
-            memo.id = `memo-wall-${id}`; // 為大屏幕的 Memo 紙綁定一個獨一無二的 ID
+            memo.id = `memo-wall-${id}`; 
             memo.style.backgroundColor = data.color;
             
-            // (保留原本的網格防重疊和隨機旋轉計算)
             const GRID_WIDTH = 240;  
             const GRID_HEIGHT = 240; 
             const cols = Math.floor(window.innerWidth / GRID_WIDTH);
             const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT);
             const totalSlots = cols * rows;
             
-            // 隨機生成位置（使用你原本的網格防重疊代碼）
             const randomSlot = Math.floor(Math.random() * totalSlots);
             const colIndex = randomSlot % cols;
             const rowIndex = Math.floor(randomSlot / cols);
@@ -375,119 +372,26 @@
             document.getElementById('wall-container').appendChild(memo);
         });
 
-        // --- 【核心防手殘機制】監聽 Firebase 的刪除動作 ---
-        // 當老師喺後台撳「即時下架」，Firebase 刪除數據時，呢個監聽會命令大屏幕同埋老師後台一秒內同步清走個樣嘢！
-        import { onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-        
+        // 核心修正：當任何地方執行了「下架」，Firebase 通知大屏幕即時拔走 Memo 紙！
         onChildRemoved(ref(db, 'approved'), (snapshot) => {
             const id = snapshot.key;
             
-            // 1. 讓大屏幕上對應的 Memo 紙瞬間蒸發
+            // 1. 大屏幕同步更新：找到張 Memo，播動畫，0.5秒內即時拔走消失！
             const targetMemo = document.getElementById(`memo-wall-${id}`);
             if (targetMemo) {
                 targetMemo.style.transition = "all 0.5s ease";
                 targetMemo.style.opacity = "0";
                 targetMemo.style.transform = "scale(0)";
-                setTimeout(() => targetMemo.remove(), 500); // 動畫播完後徹底移除
+                setTimeout(() => targetMemo.remove(), 500); 
             }
 
-            // 2. 讓老師後台「大屏幕現正顯示」列表中的該列同步移除
+            // 2. 老師控制台同步更新：從現正顯示清單中清走
             const targetLiveItem = document.getElementById(`admin-approved-${id}`);
             if (targetLiveItem) {
                 targetLiveItem.remove();
             }
         });
-        
-
-
-        // --- 功能：展示端監聽 approved 並顯示在牆上 ---
-
-// --- 功能：展示端監聽 approved 並顯示在牆上 (網格防重疊優化版) ---
-        
-        // 1. 定義網格參數 (根據 Memo 紙大小 180px + 20px padding 算)
-        const GRID_WIDTH = 240;  
-        const GRID_HEIGHT = 240; 
-        let occupiedSlots = []; // 用來紀錄邊些位置已經被佔用
-
-        onChildAdded(ref(db, 'approved'), (snapshot) => {
-            const data = snapshot.val();
-            const memo = document.createElement('div');
-            memo.className = 'memo';
-            memo.style.backgroundColor = data.color;
-            
-            // 2. 計算目前大屏幕可以容納幾多行同幾多列
-            const cols = Math.floor(window.innerWidth / GRID_WIDTH);
-            const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT); // 減去頂部標題空間
-            const totalSlots = cols * rows;
-
-            // 3. 搵出未被佔用嘅空位 (Slots)
-            let availableSlots = [];
-            for (let i = 0; i < totalSlots; i++) {
-                if (!occupiedSlots.includes(i)) {
-                    availableSlots.push(i);
-                }
-            }
-
-            // 4. 如果牆上貼滿咗，就清空最舊嘅紀錄，重新填滿
-            if (availableSlots.length === 0) {
-                occupiedSlots = []; 
-                document.getElementById('wall-container').innerHTML = ''; // 清空大屏幕
-                for (let i = 0; i < totalSlots; i++) availableSlots.push(i);
-            }
-
-            // 5. 隨機揀一個空嘅格子放進去
-            const randomSlotIndex = Math.floor(Math.random() * availableSlots.length);
-            const chosenSlot = availableSlots[randomSlotIndex];
-            occupiedSlots.push(chosenSlot); // 標記呢個位置已經有人用
-
-            // 6. 將格子編號轉回 X 和 Y 座標
-            const colIndex = chosenSlot % cols;
-            const rowIndex = Math.floor(chosenSlot / cols);
-
-            // 7. 加上少許微調 (Offset)，容許最多 1/4 的重疊，令畫面看起來更自然、不呆板
-            const maxOverlapX = GRID_WIDTH * 0.25;  // 最多重疊 1/4
-            const maxOverlapY = GRID_HEIGHT * 0.25; 
-            
-            const offsetX = (Math.random() - 0.5) * maxOverlapX;
-            const offsetY = (Math.random() - 0.5) * maxOverlapY;
-
-            const x = colIndex * GRID_WIDTH + 20 + offsetX;
-            const y = rowIndex * GRID_HEIGHT + 120 + offsetY; // 120 是避開標題
-            const rot = (Math.random() - 0.5) * 15; // 隨機輕微旋轉
-
-
-            // 8. 套用樣式與內容 (修正以配合慢慢浮現動畫)
-            
-            // 將原本隨機計算出的旋轉角度，儲存為一個 CSS 變數 (--random-rot)，讓 CSS 動畫讀取
-            memo.style.setProperty('--random-rot', `${rot}deg`);
-            
-            // 只設定 left 和 top (不設定 transform，由動畫去設定)
-            memo.style.left = `${x}px`;
-            memo.style.top = `${y}px`;
-            
-            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
-            document.getElementById('wall-container').appendChild(memo);
-
-
-
-
-
-            
-            // 8. 套用樣式與內容
-     /*--       memo.style.left = `${x}px`;
-            memo.style.top = `${y}px`;
-            memo.style.transform = `rotate(${rot}deg)`;
-            
-            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
-            document.getElementById('wall-container').appendChild(memo);
-        --*/
-            
-            // 限制畫面的總數目，維持大屏幕順暢
-            if(document.querySelectorAll('.memo').length > totalSlots) {
-                document.querySelector('.memo').remove();
-            }
-      
-        });
     </script>
+
 </body>
 </html>
