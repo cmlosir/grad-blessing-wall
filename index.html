@@ -165,7 +165,7 @@
             flex-direction: column;
             justify-content: space-between;
             /* 將動畫換成 memoFadeUp，時間拉長到 1.5秒，慢入慢出 */
-            animation: memoFadeUp 1.5s ease-in-out forwards;
+            animation: memoFadeUp 1.8s ease-in-out forwards;
             
             /* 預設透明度為 0 (隱藏)，等待動畫執行 */
             opacity: 0;
@@ -223,7 +223,7 @@
     </div>
 
     <div id="display-page" class="page">
-        <div class="wall-title">2026 Graduation Ceremony Share your Messages and Wishes</div>
+        <div class="wall-title">2026 Graduation Ceremony    Share your Messages and Wishes</div>
         <div id="wall-container"></div>
     </div>
 
@@ -446,7 +446,7 @@
         // 1. 禁用滑鼠右鍵
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            alert("為了活動安全，本網頁已禁用右鍵功能。");
+            alert("網頁已禁用右鍵功能。");
         });
 
         // 2. 禁用鍵盤 F12, Ctrl+Shift+I (Windows), Cmd+Alt+I (Mac) 等開發者工具快捷鍵
