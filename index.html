@@ -90,22 +90,13 @@
     </div>
 
     <!-- Firebase SDK -->
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        // !!! 重要：請替換成你的 Firebase Config !!!
-     /*   const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
-        }; */
+        // !!! 重要：請記得填寫你自己的 Firebase Config !!!
 
-const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
   authDomain: "grad-message.firebaseapp.com",
   databaseURL: "https://grad-message-default-rtdb.firebaseio.com/",
@@ -117,51 +108,35 @@ const firebaseConfig = {
   measurementId: "G-7FMV2SFQJ9"
 };
 
-// Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
-
-
-
-
-        
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
 
-        // --- 功能：切換頁面 ---
-      /*  window.showPage = (id) => {
+        // --- 密碼與分頁切換功能 (已完全修正) ---
+        const ADMIN_PASSWORD = "ydss"; 
+
+        window.showPage = (id) => {
+            if (id === 'admin-page') {
+                const password = prompt("請輸入管理員密碼：");
+                if (password === ADMIN_PASSWORD) {
+                    executePageChange(id);
+                } else {
+                    alert("密碼錯誤，拒絕存取！");
+                }
+            } else {
+                executePageChange(id);
+            }
+        };
+
+        function executePageChange(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }; */
-
-   // 1. 設定你的管理員密碼
-const ADMIN_PASSWORD = "ydss"; 
-
-// 2. 換上這個有密碼防護的切換功能
-window.showPage = (id) => {
-    if (id === 'admin-page') {
-        const password = prompt("請輸入管理員密碼：");
-        if (password === ADMIN_PASSWORD) {
-            executePageChange(id);
-        } else {
-            alert("密碼錯誤，拒絕存取！");
+            const targetPage = document.getElementById(id);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
         }
-    } else {
-        executePageChange(id);
-    }
-};
 
-function executePageChange(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const targetPage = document.getElementById(id);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    } else {
-        console.error("找不到頁面 ID: " + id);
-    }
-}     
-        // --- 功能：輸入端送出 (存入 pending 資料夾) ---
+        // --- 功能：輸入端送出 ---
         window.submitMessage = () => {
             const name = document.getElementById('senderName').value || "有心人";
             const text = document.getElementById('messageText').value;
@@ -178,25 +153,32 @@ function executePageChange(id) {
             });
         };
 
-        // --- 功能：管理員監聽 pending 並審核 ---
+        // --- 功能：管理員監聽 pending 並審核 (修正了引號傳遞問題) ---
         onChildAdded(ref(db, 'pending'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
             const item = document.createElement('div');
             item.className = 'admin-item';
             item.id = `admin-${id}`;
-            item.innerHTML = `
-                <div><strong>${data.name}:</strong> ${data.text}</div>
-                <button class="approve-btn" onclick="approveMessage('${id}', ${JSON.stringify(data).replace(/"/g, '&quot;')})">批准</button>
-            `;
+            
+            // 建立文字內容
+            const textDiv = document.createElement('div');
+            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
+            
+            // 建立批准按鈕
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'approve-btn';
+            approveBtn.innerText = '批准';
+            approveBtn.onclick = () => {
+                push(ref(db, 'approved'), data); 
+                remove(ref(db, `pending/${id}`)); 
+                item.remove();
+            };
+            
+            item.appendChild(textDiv);
+            item.appendChild(approveBtn);
             document.getElementById('admin-list').appendChild(item);
         });
-
-        window.approveMessage = (id, data) => {
-            push(ref(db, 'approved'), data); // 搬到 approved
-            remove(ref(db, `pending/${id}`)); // 從 pending 刪除
-            document.getElementById(`admin-${id}`).remove();
-        };
 
         // --- 功能：展示端監聽 approved 並顯示 ---
         onChildAdded(ref(db, 'approved'), (snapshot) => {
@@ -205,7 +187,6 @@ function executePageChange(id) {
             memo.className = 'memo';
             memo.style.backgroundColor = data.color;
             
-            // 隨機位置與旋轉
             const x = Math.random() * (window.innerWidth - 220);
             const y = 100 + Math.random() * (window.innerHeight - 350);
             const rot = (Math.random() - 0.5) * 20;
@@ -217,12 +198,10 @@ function executePageChange(id) {
             memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
             document.getElementById('wall-container').appendChild(memo);
             
-            // 如果太多留言，自動刪除舊的（可選）
             if(document.querySelectorAll('.memo').length > 30) {
                 document.querySelector('.memo').remove();
             }
         });
-
     </script>
 </body>
 </html>
