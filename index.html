@@ -183,11 +183,19 @@
         <div id="wall-container"></div>
     </div>
 
-    <div id="admin-page" class="page">
-        <h2>📋 待審核留言 (密碼驗證成功)</h2>
+<div id="admin-page" class="page" style="padding: 40px 20px; overflow-y: auto; background: #fff; box-sizing: border-box;">
+        <h2>📋 老師審核控制台 (密碼驗證成功)</h2>
         <hr>
+        
+        <h3 style="color: #e67e22; margin-top: 20px;">⏳ 待審核心意 (Pending)</h3>
         <div id="admin-list"></div>
+        
+        <br><hr><br>
+        
+        <h3 style="color: #27ae60;">📺 大屏幕現正顯示 (Live)</h3>
+        <div id="admin-approved-list"></div>
     </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
@@ -253,60 +261,142 @@
 
         // --- 功能：管理員監聽 pending 並動態生成審核列表 ---
       
-// --- 功能：管理員監聽 pending 並動態生成審核列表 (已加入 Reject 功能) ---
+// --- 功能：管理員監聽 pending 並動態生成審核列表 ---
         onChildAdded(ref(db, 'pending'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
             
             const item = document.createElement('div');
             item.className = 'admin-item';
-            item.id = `admin-${id}`;
+            item.id = `admin-pending-${id}`; // 加上 pending 標記
             
             const textDiv = document.createElement('div');
             textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
             
-            // 建立一個按鈕容器，等兩個掣可以排埋一齊
             const btnGroup = document.createElement('div');
             btnGroup.style.display = 'flex';
             btnGroup.style.gap = '10px';
 
-            // 1. 建立批准按鈕 (綠色)
+            // 批准按鈕
             const approveBtn = document.createElement('button');
             approveBtn.className = 'approve-btn';
             approveBtn.innerText = '批准';
             approveBtn.onclick = () => {
+                // 將資料搬去 approved，並附帶原本嘅時間印記，確保留言次序不變
                 push(ref(db, 'approved'), data); 
                 remove(ref(db, `pending/${id}`)); 
                 item.remove();
             };
             
-            // 2. 建立拒絕按鈕 (紅色)
+            // 拒絕按鈕
             const rejectBtn = document.createElement('button');
             rejectBtn.innerText = '拒絕';
-            // 直接加上紅色樣式
             rejectBtn.style.background = '#e74c3c';
             rejectBtn.style.color = 'white';
             rejectBtn.style.padding = '10px 20px';
             rejectBtn.style.border = 'none';
-            rejectBtn.style.border = 'radius: 5px';
+            rejectBtn.style.borderRadius = '5px';
             rejectBtn.style.cursor = 'pointer';
-            rejectBtn.style.fontSize = '1rem';
             
             rejectBtn.onclick = () => {
                 if(confirm(`確定要拒絕並刪除這條留言嗎？\n"${data.text}"`)) {
-                    remove(ref(db, `pending/${id}`)); // 直接由 Firebase 刪除
-                    item.remove(); // 由老師畫面移除
+                    remove(ref(db, `pending/${id}`));
+                    item.remove();
                 }
             };
             
-            // 將兩個按鈕放進容器
             btnGroup.appendChild(approveBtn);
             btnGroup.appendChild(rejectBtn);
-            
             item.appendChild(textDiv);
             item.appendChild(btnGroup);
             document.getElementById('admin-list').appendChild(item);
-        });        
+        });
+
+        // --- 功能：管理員同時監聽 approved，生成「隨時下架」清單 ---
+        onChildAdded(ref(db, 'approved'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+
+            // 1. 在老師的「大屏幕現正顯示」列表中加一列
+            const liveItem = document.createElement('div');
+            liveItem.className = 'admin-item';
+            liveItem.id = `admin-approved-${id}`; // 用 approved ID 標記
+            liveItem.style.borderLeft = "5px solid #27ae60"; // 加條綠邊容易睇
+
+            const textDiv = document.createElement('div');
+            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.innerText = '⚠️ 即時下架';
+            removeBtn.style.background = '#c0392b';
+            removeBtn.style.color = 'white';
+            removeBtn.style.padding = '10px 15px';
+            removeBtn.style.border = 'none';
+            removeBtn.style.borderRadius = '5px';
+            removeBtn.style.cursor = 'pointer';
+
+            removeBtn.onclick = () => {
+                if(confirm(`防手殘安全確認：\n確定要將 "${data.name}" 的留言從大屏幕【即時下架】並永久刪除嗎？`)) {
+                    remove(ref(db, `approved/${id}`)); // 從 Firebase 的 approved 刪除數據
+                    // 備註：大屏幕會收到下面的 remove 監聽，自動將 Memo 蒸發，這裡不用手動 delete 畫面
+                }
+            };
+
+            liveItem.appendChild(textDiv);
+            liveItem.appendChild(removeBtn);
+            document.getElementById('admin-approved-list').appendChild(liveItem);
+
+            // 2. 【大屏幕同步顯示】當有新 approved，在展示端生成 Memo 紙
+            const memo = document.createElement('div');
+            memo.className = 'memo';
+            memo.id = `memo-wall-${id}`; // 為大屏幕的 Memo 紙綁定一個獨一無二的 ID
+            memo.style.backgroundColor = data.color;
+            
+            // (保留原本的網格防重疊和隨機旋轉計算)
+            const GRID_WIDTH = 240;  
+            const GRID_HEIGHT = 240; 
+            const cols = Math.floor(window.innerWidth / GRID_WIDTH);
+            const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT);
+            const totalSlots = cols * rows;
+            
+            // 隨機生成位置（使用你原本的網格防重疊代碼）
+            const randomSlot = Math.floor(Math.random() * totalSlots);
+            const colIndex = randomSlot % cols;
+            const rowIndex = Math.floor(randomSlot / cols);
+            const rot = (Math.random() - 0.5) * 15;
+            const x = colIndex * GRID_WIDTH + 20 + (Math.random() - 0.5) * 60;
+            const y = rowIndex * GRID_HEIGHT + 120 + (Math.random() - 0.5) * 60;
+
+            memo.style.setProperty('--random-rot', `${rot}deg`);
+            memo.style.left = `${x}px`;
+            memo.style.top = `${y}px`;
+            
+            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
+            document.getElementById('wall-container').appendChild(memo);
+        });
+
+        // --- 【核心防手殘機制】監聽 Firebase 的刪除動作 ---
+        // 當老師喺後台撳「即時下架」，Firebase 刪除數據時，呢個監聽會命令大屏幕同埋老師後台一秒內同步清走個樣嘢！
+        import { onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        
+        onChildRemoved(ref(db, 'approved'), (snapshot) => {
+            const id = snapshot.key;
+            
+            // 1. 讓大屏幕上對應的 Memo 紙瞬間蒸發
+            const targetMemo = document.getElementById(`memo-wall-${id}`);
+            if (targetMemo) {
+                targetMemo.style.transition = "all 0.5s ease";
+                targetMemo.style.opacity = "0";
+                targetMemo.style.transform = "scale(0)";
+                setTimeout(() => targetMemo.remove(), 500); // 動畫播完後徹底移除
+            }
+
+            // 2. 讓老師後台「大屏幕現正顯示」列表中的該列同步移除
+            const targetLiveItem = document.getElementById(`admin-approved-${id}`);
+            if (targetLiveItem) {
+                targetLiveItem.remove();
+            }
+        });
         
 
 
