@@ -438,7 +438,44 @@
                 targetLiveItem.remove();
             }
         });
-    </script>
+  
+// ========================================================
+        // 🔒 安全防護：禁用右鍵、F12 及開發者工具快捷鍵
+        // ========================================================
+        
+        // 1. 禁用滑鼠右鍵
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            alert("為了活動安全，本網頁已禁用右鍵功能。");
+        });
+
+        // 2. 禁用鍵盤 F12, Ctrl+Shift+I (Windows), Cmd+Alt+I (Mac) 等開發者工具快捷鍵
+        document.addEventListener('keydown', (e) => {
+            // F12 鍵
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + I 或 Cmd + Alt + I (打開檢查)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + J (打開 Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + U (直接觀看網頁原始碼)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+
+
+</script>
 
 </body>
 </html>
