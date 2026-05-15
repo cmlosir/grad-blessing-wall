@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline';">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>畢業禮心意牆</title>
@@ -94,6 +95,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
+       
         // !!! 重要：請記得填寫你自己的 Firebase Config !!!
 
     const firebaseConfig = {
