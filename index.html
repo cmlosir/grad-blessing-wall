@@ -13,9 +13,56 @@
         body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; overflow: hidden; background: var(--bg-color); }
         
         /* 導覽切換 (僅供測試用) */
-        .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
+      /* --  .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
         .nav-debug button { cursor: pointer; padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; background: white; font-weight: bold; }
+         --*/
+/* --- 修正後：平時隱藏、Mouse Over 才浮現的控制列 --- */
+        .nav-debug { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            z-index: 9999; 
+            background: rgba(0, 0, 0, 0.1); /* 平時極淡色 */
+            padding: 10px; 
+            border-top-right-radius: 8px; 
+            
+            /* 核心特效：平時拉低 45px，並且變透明 */
+            transform: translateY(45px); 
+            opacity: 0.1; 
+            
+            /* 讓浮現動作有 0.3 秒的順滑動畫效果 */
+            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease; 
+        }
 
+        /* 當 Mouse 移上去 (Hover) 或者用手指觸摸時，原形畢露 */
+        .nav-debug:hover { 
+            transform: translateY(0); 
+            opacity: 1; 
+            background: rgba(0, 0, 0, 0.8); /* 變深色方便看清 */
+        }
+
+        .nav-debug button { 
+            cursor: pointer; 
+            padding: 8px 14px; 
+            margin: 2px; 
+            border: none; 
+            border-radius: 6px; 
+            background: white; 
+            font-weight: bold; 
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* 稍微提示老師滑鼠要移去邊度 */
+        .nav-debug::before {
+            content: "◢ 導航選單 (滑鼠移至此處)";
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
         .page { display: none; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; }
         .active { display: block; }
 
