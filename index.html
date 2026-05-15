@@ -20,10 +20,89 @@
         .active { display: block; }
 
         /* --- 1. 輸入端樣式 --- */
-        #input-page { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
-        .input-box { width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
-        input, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        .send-btn { padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
+
+/* --- 1. 修正後的手機專用輸入端樣式 --- */
+        #input-page { 
+            background: #f4f7f6; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; /* 頂部對齊，防止手機鍵盤彈出時遮擋內容 */
+            padding: 30px 20px; 
+            box-sizing: border-box;
+            overflow-y: auto; /* 允許垂直滾動，適合矮屏幕手機 */
+        }
+
+        #input-page h2 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            margin-top: 10px;
+        }
+
+        #input-page p {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .input-box { 
+            width: 100%; 
+            max-width: 450px; /* 電腦版最大寬度 */
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        /* 放大輸入框，設定 16px 防止 iOS Safari 自動放大網頁 */
+        #senderName, #messageText { 
+            width: 100%;
+            padding: 14px 16px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        /* 輸入框點擊時的高亮效果 */
+        #senderName:focus, #messageText:focus {
+            border-color: #3498db;
+        }
+
+        /* 固定 Textarea 的高度，並防止高度超出手機螢幕 */
+        #messageText {
+            resize: none;
+            min-height: 120px;
+        }
+
+        /* 大按鈕設計，方便手指盲撳 */
+        .send-btn { 
+            width: 100%;
+            padding: 16px; 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 1.1rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊時的藍色高亮陰影 */
+        }
+
+        .send-btn:active {
+            background: #1a252f;
+            transform: scale(0.98); /* 撳落去有微微縮小的按鈕反饋感 */
+        }
 
         /* --- 2. 大屏幕展示端樣式 --- */
         #display-page { background: #eef2f3 url('https://www.transparenttextures.com/patterns/white-wall.png'); }
@@ -148,6 +227,8 @@
         });
 
         // --- 功能：管理員監聽 pending 並動態生成審核列表 ---
+      
+// --- 功能：管理員監聽 pending 並動態生成審核列表 (已加入 Reject 功能) ---
         onChildAdded(ref(db, 'pending'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
@@ -159,6 +240,12 @@
             const textDiv = document.createElement('div');
             textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
             
+            // 建立一個按鈕容器，等兩個掣可以排埋一齊
+            const btnGroup = document.createElement('div');
+            btnGroup.style.display = 'flex';
+            btnGroup.style.gap = '10px';
+
+            // 1. 建立批准按鈕 (綠色)
             const approveBtn = document.createElement('button');
             approveBtn.className = 'approve-btn';
             approveBtn.innerText = '批准';
@@ -168,10 +255,35 @@
                 item.remove();
             };
             
+            // 2. 建立拒絕按鈕 (紅色)
+            const rejectBtn = document.createElement('button');
+            rejectBtn.innerText = '拒絕';
+            // 直接加上紅色樣式
+            rejectBtn.style.background = '#e74c3c';
+            rejectBtn.style.color = 'white';
+            rejectBtn.style.padding = '10px 20px';
+            rejectBtn.style.border = 'none';
+            rejectBtn.style.border = 'radius: 5px';
+            rejectBtn.style.cursor = 'pointer';
+            rejectBtn.style.fontSize = '1rem';
+            
+            rejectBtn.onclick = () => {
+                if(confirm(`確定要拒絕並刪除這條留言嗎？\n"${data.text}"`)) {
+                    remove(ref(db, `pending/${id}`)); // 直接由 Firebase 刪除
+                    item.remove(); // 由老師畫面移除
+                }
+            };
+            
+            // 將兩個按鈕放進容器
+            btnGroup.appendChild(approveBtn);
+            btnGroup.appendChild(rejectBtn);
+            
             item.appendChild(textDiv);
-            item.appendChild(approveBtn);
+            item.appendChild(btnGroup);
             document.getElementById('admin-list').appendChild(item);
-        });
+        });        
+        
+
 
         // --- 功能：展示端監聽 approved 並顯示在牆上 ---
         onChildAdded(ref(db, 'approved'), (snapshot) => {
