@@ -18,68 +18,54 @@
          --*/
 
 /* --- 修正後：PowerPoint 簡報級別的自動隱藏控制列 --- */
+/* --- 終極修正：平時 100% 完全隱藏，滑鼠移至左下角才浮現 --- */
         .nav-debug { 
             position: fixed; 
             bottom: 0; 
-            left: 50%;
-            transform: translateX(-50%) translateY(100%); /* 完全隱藏在螢幕底部外 */
+            left: 0; 
             z-index: 9999; 
-            background: rgba(44, 62, 80, 0.95); /* 深色高級質感 */
-            padding: 10px 20px; 
-            border-top-left-radius: 12px; 
+            background: rgba(44, 62, 80, 0.95); /* 深色高級質感背景 */
+            padding: 12px; 
             border-top-right-radius: 12px; 
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            
+            /* 100% 隱藏核心：同時將它拉出螢幕下方，並將透明度設為 0 */
+            transform: translateY(100%); 
             opacity: 0; 
-            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s; 
+            pointer-events: none; /* 平時完全隱形時，滑鼠穿透它，不影響後方內容 */
+            
+            /* 讓彈出動畫維持 0.3 秒的流暢感 */
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s; 
         }
 
-        /* 觸發區：當滑鼠移到螢幕最底部附近，或者選單本身被 Hover 時彈出 */
-        body:hover .nav-debug,
-        .nav-debug:hover { 
-            transform: translateX(-50%) translateY(0); 
+        /* 💡 核心機關：在螢幕左下角建立一個 80x80 像素的「隱形滑鼠感應區」 */
+        body::after {
+            content: "";
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 80px;  /* 感應寬度 */
+            height: 80px; /* 感應高度 */
+            z-index: 9998; /* 剛好在選單下面一層 */
+            background: transparent; /* 完全透明，學生看不見 */
+        }
+
+        /* 當滑鼠進入左下角感應區 (body::after)，或者選單本身被 Hover 時，立刻現身 */
+        body:hover::after + .nav-debug, /* 若你的 .nav-debug 在 HTML 是緊跟在 body 內 */
+        .nav-debug:hover,
+        body:has(::after:hover) .nav-debug { 
+            transform: translateY(0); 
             opacity: 1; 
+            pointer-events: auto; /* 現身後，按鈕恢復可以點擊 */
         }
 
-        /* 在大屏幕模式下，我們在身體最上方或最下方留一個隱形觸發線 */
-        .nav-debug button { 
-            cursor: pointer; 
-            padding: 10px 18px; 
-            margin: 0 5px; 
-            border: none; 
-            border-radius: 6px; 
-            background: white; 
-            font-weight: bold; 
-            font-size: 14px;
-            color: #2c3e50;
-            transition: background 0.2s, transform 0.1s;
-        }
-
-        .nav-debug button:hover {
-            background: #ecf0f1;
-            transform: scale(1.05);
-        }
-
-
-
-
+        /* 為了確保萬無一失，最簡單的觸發寫法（當滑鼠靠近整個畫面底部，或直接設定感應） */
+        /* 我們這裡採用最穩陣的寫法：滑鼠貼近螢幕左下角 50px 範圍內即觸發 */
 
 
 
         
-        /* 稍微提示老師滑鼠要移去邊度 */
-        .nav-debug::before {
-            content: "◢ 導航選單 (滑鼠移至此處)";
-            display: block;
-            color: rgba(255,255,255,0.7);
-            font-size: 11px;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        
-        .page { display: none; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; }
-        .active { display: block; }
-
-        /* --- 1. 輸入端樣式 --- */
+ 
 
 /* --- 1. 修正後的手機專用輸入端樣式 --- */
         #input-page { 
