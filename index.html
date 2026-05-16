@@ -16,56 +16,57 @@
       /* --  .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
         .nav-debug button { cursor: pointer; padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; background: white; font-weight: bold; }
          --*/
-
-/* --- 修正後：PowerPoint 簡報級別的自動隱藏控制列 --- */
-/* --- 終極修正：平時 100% 完全隱藏，滑鼠移至左下角才浮現 --- */
+/* --- 修正後：平時隱藏、Mouse Over 才浮現的控制列 --- */
         .nav-debug { 
             position: fixed; 
             bottom: 0; 
             left: 0; 
             z-index: 9999; 
-            background: rgba(44, 62, 80, 0.95); /* 深色高級質感背景 */
-            padding: 12px; 
-            border-top-right-radius: 12px; 
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.1); /* 平時極淡色 */
+            padding: 10px; 
+            border-top-right-radius: 8px; 
             
-            /* 100% 隱藏核心：同時將它拉出螢幕下方，並將透明度設為 0 */
-            transform: translateY(100%); 
-            opacity: 0; 
-            pointer-events: none; /* 平時完全隱形時，滑鼠穿透它，不影響後方內容 */
+            /* 核心特效：平時拉低 45px，並且變透明 */
+            transform: translateY(45px); 
+            opacity: 0.1; 
             
-            /* 讓彈出動畫維持 0.3 秒的流暢感 */
-            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s; 
+            /* 讓浮現動作有 0.3 秒的順滑動畫效果 */
+            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease; 
         }
 
-        /* 💡 核心機關：在螢幕左下角建立一個 80x80 像素的「隱形滑鼠感應區」 */
-        body::after {
-            content: "";
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 80px;  /* 感應寬度 */
-            height: 80px; /* 感應高度 */
-            z-index: 9998; /* 剛好在選單下面一層 */
-            background: transparent; /* 完全透明，學生看不見 */
-        }
-
-        /* 當滑鼠進入左下角感應區 (body::after)，或者選單本身被 Hover 時，立刻現身 */
-        body:hover::after + .nav-debug, /* 若你的 .nav-debug 在 HTML 是緊跟在 body 內 */
-        .nav-debug:hover,
-        body:has(::after:hover) .nav-debug { 
+        /* 當 Mouse 移上去 (Hover) 或者用手指觸摸時，原形畢露 */
+        .nav-debug:hover { 
             transform: translateY(0); 
             opacity: 1; 
-            pointer-events: auto; /* 現身後，按鈕恢復可以點擊 */
+            background: rgba(0, 0, 0, 0.8); /* 變深色方便看清 */
         }
 
-        /* 為了確保萬無一失，最簡單的觸發寫法（當滑鼠靠近整個畫面底部，或直接設定感應） */
-        /* 我們這裡採用最穩陣的寫法：滑鼠貼近螢幕左下角 50px 範圍內即觸發 */
-
-
-
+        .nav-debug button { 
+            cursor: pointer; 
+            padding: 8px 14px; 
+            margin: 2px; 
+            border: none; 
+            border-radius: 6px; 
+            background: white; 
+            font-weight: bold; 
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         
- 
+        /* 稍微提示老師滑鼠要移去邊度 */
+        .nav-debug::before {
+            content: "◢ 導航選單 (滑鼠移至此處)";
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .page { display: none; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; }
+        .active { display: block; }
+
+        /* --- 1. 輸入端樣式 --- */
 
 /* --- 1. 修正後的手機專用輸入端樣式 --- */
         #input-page { 
@@ -163,8 +164,8 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            /* 將動畫換成 memoFadeUp，時間拉長到 2.0 秒，慢入慢出 */
-            animation: memoFadeUp 2.0s ease-in-out forwards;
+            /* 將動畫換成 memoFadeUp，時間拉長到 1.5秒，慢入慢出 */
+            animation: memoFadeUp 1.8s ease-in-out forwards;
             
             /* 預設透明度為 0 (隱藏)，等待動畫執行 */
             opacity: 0;
@@ -239,15 +240,13 @@
         <div id="admin-approved-list"></div>
     </div>
 
-   <!-- ======================================================== -->
-    <!-- 🎛️ 完整 JavaScript：包含全螢幕切換、防重疊、即時下架及防偷睇功能 -->
-    <!-- ======================================================== -->
-    <script type="module">
+<script type="module">
+        // 1. 確保這裡完整 import 咗 onChildRemoved，大屏幕先至會識得即時自動清走 Memo
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        // ⚠️ 請記得檢查並更換成你自己的真實 Firebase 憑據
-       const firebaseConfig = {
+        // !!! 重要：請填寫你自己的真實 Firebase Config !!!
+        const firebaseConfig = {
              apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
               authDomain: "grad-message.firebaseapp.com",
               databaseURL: "https://grad-message-default-rtdb.firebaseio.com/",
@@ -261,9 +260,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
-        const ADMIN_PASSWORD = "ydss"; // 老師你的管理員密碼
+        const ADMIN_PASSWORD = "ydss"; 
 
-        // --- 核心功能 1：支援 PowerPoint 全螢幕模式的頁面切換 ---
+        // --- 頁面切換功能 ---
         function executePageChange(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById(id);
@@ -272,45 +271,18 @@
             }
         }
 
-        // 點擊「輸入端」：確保退出全螢幕，切換畫面
-        document.getElementById('btn-goto-input').addEventListener('click', () => {
-            if (document.fullscreenElement) {
-                document.exitFullscreen().catch(err => console.log(err));
-            }
-            executePageChange('input-page');
-        });
-
-        // 點擊「老師審核」：輸入密碼，確保退出全螢幕，切換畫面
+        document.getElementById('btn-goto-input').addEventListener('click', () => executePageChange('input-page'));
+        document.getElementById('btn-goto-display').addEventListener('click', () => executePageChange('display-page'));
         document.getElementById('btn-goto-admin').addEventListener('click', () => {
             const password = prompt("請輸入管理員密碼：");
             if (password === ADMIN_PASSWORD) {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen().catch(err => console.log(err));
-                }
                 executePageChange('admin-page');
             } else {
                 alert("密碼錯誤，拒絕存取！");
             }
         });
 
-        // 點擊「大屏幕展示」：【核心】自動進入全螢幕簡報模式，隱藏瀏覽器網址列
-        document.getElementById('btn-goto-display').addEventListener('click', () => {
-            executePageChange('display-page');
-            
-            const docElm = document.documentElement;
-            if (docElm.requestFullscreen) {
-                docElm.requestFullscreen().catch(err => console.log(err));
-            } else if (docElm.mozRequestFullScreen) { /* Firefox */
-                docElm.mozRequestFullScreen();
-            } else if (docElm.webkitRequestFullscreen) { /* Chrome, Safari */
-                docElm.webkitRequestFullscreen();
-            } else if (docElm.msRequestFullscreen) { /* IE/Edge */
-                docElm.msRequestFullscreen();
-            }
-        });
-
-
-        // --- 核心功能 2：學生/家長輸入端送出留言 ---
+        // --- 功能：輸入端送出 ---
         document.getElementById('btn-submit').addEventListener('click', () => {
             const name = document.getElementById('senderName').value || "有心人";
             const text = document.getElementById('messageText').value;
@@ -327,8 +299,7 @@
             });
         });
 
-
-        // --- 核心功能 3：後台監聽 pending (待審核) 列表 ---
+        // --- 功能：管理員監聽 pending (待審核) ---
         onChildAdded(ref(db, 'pending'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
@@ -344,7 +315,6 @@
             btnGroup.style.display = 'flex';
             btnGroup.style.gap = '10px';
 
-            // 批准按鈕
             const approveBtn = document.createElement('button');
             approveBtn.className = 'approve-btn';
             approveBtn.innerText = '批准';
@@ -354,7 +324,6 @@
                 item.remove();
             };
             
-            // 拒絕按鈕
             const rejectBtn = document.createElement('button');
             rejectBtn.innerText = '拒絕';
             rejectBtn.style.background = '#e74c3c';
@@ -378,8 +347,7 @@
             document.getElementById('admin-list').appendChild(item);
         });
 
-
-        // --- 核心功能 4：後台監聽 approved (已出街列表，供隨時即時下架) ---
+        // --- 功能：管理員監聽 approved (已出街列表) ---
         onChildAdded(ref(db, 'approved'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
@@ -403,7 +371,7 @@
 
             removeBtn.onclick = () => {
                 if(confirm(`防手殘安全確認：\n確定要將 "${data.name}" 的留言從大屏幕【即時下架】並永久刪除嗎？`)) {
-                    remove(ref(db, `approved/${id}`)); // 刪除雲端數據，觸發下面第 6 部分的自動連動
+                    remove(ref(db, `approved/${id}`)); // 這裡一刪除，下面兩個 onChildRemoved 就會即時觸發更新！
                 }
             };
 
@@ -413,19 +381,23 @@
         });
 
 
-        // --- 核心功能 5：📺 大屏幕實時生成網格防重疊、慢慢浮現的 Memo 紙 ---
+        // ========================================================
+        // 📺 大屏幕專用：實時監聽（免 Refresh、一秒同步關鍵）
+        // ========================================================
+
+        // 大屏幕：當有新留言被批准時，生成 Memo 紙貼上牆
         onChildAdded(ref(db, 'approved'), (snapshot) => {
             const data = snapshot.val();
             const id = snapshot.key;
 
-            if (document.getElementById(`memo-wall-${id}`)) return; // 防止重複生成
+            // 如果已經存在同 ID 的 Memo，就不重複生成（防止老師開多個分頁時衝突）
+            if (document.getElementById(`memo-wall-${id}`)) return;
 
             const memo = document.createElement('div');
             memo.className = 'memo';
             memo.id = `memo-wall-${id}`; 
             memo.style.backgroundColor = data.color;
             
-            // 網格防重疊計算法
             const GRID_WIDTH = 240;  
             const GRID_HEIGHT = 240; 
             const cols = Math.floor(window.innerWidth / GRID_WIDTH);
@@ -436,12 +408,9 @@
             const colIndex = randomSlot % cols;
             const rowIndex = Math.floor(randomSlot / cols);
             const rot = (Math.random() - 0.5) * 15;
-            
-            // 限制最多 1/4 重疊的隨機位移
             const x = colIndex * GRID_WIDTH + 20 + (Math.random() - 0.5) * 60;
             const y = rowIndex * GRID_HEIGHT + 120 + (Math.random() - 0.5) * 60;
 
-            // 傳遞隨機角度給 CSS 動畫，配合慢慢浮現特效
             memo.style.setProperty('--random-rot', `${rot}deg`);
             memo.style.left = `${x}px`;
             memo.style.top = `${y}px`;
@@ -450,12 +419,11 @@
             document.getElementById('wall-container').appendChild(memo);
         });
 
-
-        // --- 核心功能 6：🔒 實時連動！一鍵下架令大屏幕及後台即時自動更新 (免 Refresh) ---
+        // 核心修正：當任何地方執行了「下架」，Firebase 通知大屏幕即時拔走 Memo 紙！
         onChildRemoved(ref(db, 'approved'), (snapshot) => {
             const id = snapshot.key;
             
-            // 1. 大屏幕即時蒸發
+            // 1. 大屏幕同步更新：找到張 Memo，播動畫，0.5秒內即時拔走消失！
             const targetMemo = document.getElementById(`memo-wall-${id}`);
             if (targetMemo) {
                 targetMemo.style.transition = "all 0.5s ease";
@@ -464,27 +432,50 @@
                 setTimeout(() => targetMemo.remove(), 500); 
             }
 
-            // 2. 老師控制台「現正顯示」清單即時同步移除
+            // 2. 老師控制台同步更新：從現正顯示清單中清走
             const targetLiveItem = document.getElementById(`admin-approved-${id}`);
             if (targetLiveItem) {
                 targetLiveItem.remove();
             }
         });
-
-
-        // --- 核心功能 7：🔒 安全防護：禁用滑鼠右鍵、F12 及開發者工具快捷鍵 ---
+  
+// ========================================================
+        // 🔒 安全防護：禁用右鍵、F12 及開發者工具快捷鍵
+        // ========================================================
+        
+        // 1. 禁用滑鼠右鍵
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             alert("網頁已禁用右鍵功能。");
         });
 
+        // 2. 禁用鍵盤 F12, Ctrl+Shift+I (Windows), Cmd+Alt+I (Mac) 等開發者工具快捷鍵
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12') { e.preventDefault(); return false; }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') { e.preventDefault(); return false; }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') { e.preventDefault(); return false; }
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') { e.preventDefault(); return false; }
+            // F12 鍵
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + I 或 Cmd + Alt + I (打開檢查)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + J (打開 Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + U (直接觀看網頁原始碼)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                return false;
+            }
         });
-    </script>
+
+
+
+</script>
 
 </body>
 </html>
