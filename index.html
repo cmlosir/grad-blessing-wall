@@ -3,453 +3,1222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>畢業禮心意牆</title>
+    <title>🎓 畢業禮心意牆 - 2026 Graduation Day</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root {
-            --bg-color: #eef2f3;
-            --memo-yellow: #fff9a0;
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
         }
 
-        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; overflow: hidden; background: var(--bg-color); }
-        
-        /* 導覽切換 (僅供測試用) */
-      /* --  .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
-        .nav-debug button { cursor: pointer; padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; background: white; font-weight: bold; }
-         --*/
-/* --- 修正後：平時隱藏、Mouse Over 才浮現的控制列 --- */
-        .nav-debug { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            z-index: 9999; 
-            background: rgba(0, 0, 0, 0.1); /* 平時極淡色 */
-            padding: 10px; 
-            border-top-right-radius: 8px; 
-            
-            /* 核心特效：平時拉低 45px，並且變透明 */
-            transform: translateY(45px); 
-            opacity: 0.1; 
-            
-            /* 讓浮現動作有 0.3 秒的順滑動畫效果 */
-            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease; 
+        /* 自訂美化滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
         }
 
-        /* 當 Mouse 移上去 (Hover) 或者用手指觸摸時，原形畢露 */
-        .nav-debug:hover { 
-            transform: translateY(0); 
-            opacity: 1; 
-            background: rgba(0, 0, 0, 0.8); /* 變深色方便看清 */
+        /* 導航懸浮條特效 */
+        .nav-hover-bar {
+            transform: translateY(45px);
+            opacity: 0.1;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .nav-hover-bar:hover {
+            transform: translateY(0);
+            opacity: 1;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
-        .nav-debug button { 
-            cursor: pointer; 
-            padding: 8px 14px; 
-            margin: 2px; 
-            border: none; 
-            border-radius: 6px; 
-            background: white; 
-            font-weight: bold; 
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        /* 稍微提示老師滑鼠要移去邊度 */
-        .nav-debug::before {
-            content: "◢ 導航選單 (滑鼠移至此處)";
-            display: block;
-            color: rgba(255,255,255,0.7);
-            font-size: 11px;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        
-        .page { display: none; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; }
-        .active { display: block; }
-
-        /* --- 1. 輸入端樣式 --- */
-
-/* --- 1. 修正後的手機專用輸入端樣式 --- */
-        #input-page { 
-            background: #f4f7f6; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; /* 頂部對齊，防止手機鍵盤彈出時遮擋內容 */
-            padding: 30px 20px; 
-            box-sizing: border-box;
-            overflow-y: auto; /* 允許垂直滾動，適合矮屏幕手機 */
-        }
-
-        #input-page h2 {
-            font-size: 1.8rem;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            margin-top: 10px;
-        }
-
-        #input-page p {
-            font-size: 1rem;
-            color: #7f8c8d;
-            margin-bottom: 25px;
-        }
-
-        .input-box { 
-            width: 100%; 
-            max-width: 450px; /* 電腦版最大寬度 */
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            background: white;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-        }
-
-        /* 放大輸入框，設定 16px 防止 iOS Safari 自動放大網頁 */
-        #senderName, #messageText { 
-            width: 100%;
-            padding: 14px 16px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-
-        /* 輸入框點擊時的高亮效果 */
-        #senderName:focus, #messageText:focus {
-            border-color: #3498db;
-        }
-
-        /* 固定 Textarea 的高度，並防止高度超出手機螢幕 */
-        #messageText {
-            resize: none;
-            min-height: 120px;
-        }
-
-        /* 大按鈕設計，方便手指盲撳 */
-        .send-btn { 
-            width: 100%;
-            padding: 16px; 
-            background: #2c3e50; 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1.1rem; 
-            font-weight: bold;
-            cursor: pointer; 
-            transition: background 0.2s;
-            box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
-            -webkit-tap-highlight-color: transparent; /* 移除手機點擊時的藍色高亮陰影 */
-        }
-
-        .send-btn:active {
-            background: #1a252f;
-            transform: scale(0.98); /* 撳落去有微微縮小的按鈕反饋感 */
-        }
-
-        /* --- 2. 大屏幕展示端樣式 --- */
-        #display-page { background: #eef2f3 url('https://www.transparenttextures.com/patterns/white-wall.png'); }
-        .wall-title { position: absolute; width: 100%; text-align: center; top: 20px; font-size: 2.5rem; color: #34495e; z-index: 10; font-weight: bold; }
-        
-        .memo {
+        /* 擬真心意卡（Memo）樣式 */
+        .memo-card {
             position: absolute;
-            width: 180px;
-            min-height: 180px;
-            padding: 20px;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            /* 將動畫換成 memoFadeUp，時間拉長到 1.5秒，慢入慢出 */
-            animation: memoFadeUp 1.8s ease-in-out forwards;
-            
-            /* 預設透明度為 0 (隱藏)，等待動畫執行 */
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: memoFadeUp 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
             opacity: 0;
-            
-         /*   animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;    */
-            word-wrap: break-word;
-            border-bottom-right-radius: 40px 10px;
+            transform-origin: center center;
+            border-bottom-right-radius: 40px 14px;
         }
-        .memo p { margin: 0; font-size: 1.1rem; line-height: 1.4; color: #333; }
-        .memo span { text-align: right; font-size: 0.85rem; color: #666; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 5px; }
 
-
+        /* 手撕膠帶擬真視覺 */
+        .tape-effect::before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-3deg);
+            width: 85px;
+            height: 24px;
+            background-color: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 3px dashed rgba(0,0,0,0.08);
+            border-right: 3px dashed rgba(0,0,0,0.08);
+            z-index: 10;
+        }
 
         @keyframes memoFadeUp {
-            0% { 
-                /* 起始狀態：完全透明，且位置向下飄移 20px */
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95); 
+            0% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.85) rotate(var(--rot-init, 0deg));
             }
-            30% {
-                /* 快速浮現出一些形狀 */
-                opacity: 0.3;
-            }
-            100% { 
-                /* 最終狀態：完全顯示，位置回到原點，並且帶有我們之前設定的隨機旋轉 */
-                opacity: 1; 
-                transform: translateY(0) scale(1) rotate(var(--random-rot)); /* 我們稍後會修改 JS 傳遞旋轉值 */
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotate(var(--random-rot, 0deg));
             }
         }
 
-        
+        /* 動態背景樣式 */
+        .bg-wood {
+            background: #8B5A2B url('https://www.transparenttextures.com/patterns/dark-wood.png');
+        }
+        .bg-starry {
+            background: #0B1026 url('https://www.transparenttextures.com/patterns/stardust.png');
+        }
+        .bg-pastel {
+            background: linear-gradient(135deg, #fef9c3 0%, #fee2e2 50%, #e0f2fe 100%);
+        }
+        .bg-wall {
+            background: #f1f5f9 url('https://www.transparenttextures.com/patterns/white-wall.png');
+        }
+        .bg-gold {
+            background: radial-gradient(circle, #1e1b4b 0%, #0f172a 100%);
+        }
 
-        /* --- 3. 管理員審核樣式 --- */
-        #admin-page { padding: 40px 20px; overflow-y: auto; background: #fff; box-sizing: border-box; }
-        .admin-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; background: #f9f9f9; }
-        .approve-btn { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+        /* 幻燈片聚焦高亮 */
+        .highlight-focus {
+            z-index: 999 !important;
+            transform: translate(-50%, -50%) scale(1.8) rotate(0deg) !important;
+            left: 50% !important;
+            top: 50% !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+        }
+
+        /* 置頂 Pinned 卡片樣式 */
+        .pinned-memo {
+            border: 2.5px solid #fbbf24 !important;
+            box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4), 0 8px 10px -6px rgba(251, 191, 36, 0.4) !important;
+        }
     </style>
 </head>
-<body>
+<body class="select-none min-h-screen">
 
-    <div class="nav-debug">
-        <button id="btn-goto-input">學生/家長輸入</button>
-        <button id="btn-goto-admin">老師審核</button>
-        <button id="btn-goto-display">大屏幕展示</button>
+    <!-- 頂部與底部懸浮控制列 (平時隱藏，觸碰滑出) -->
+    <div class="nav-hover-bar fixed bottom-0 left-0 right-0 mx-auto max-w-xl rounded-t-2xl z-50 px-6 py-4 flex items-center justify-around gap-4 text-white">
+        <div class="absolute top-[-24px] left-1/2 -translate-x-1/2 bg-slate-900 bg-opacity-90 px-4 py-1 rounded-t-lg text-xs font-semibold tracking-wider text-slate-300 pointer-events-none">
+            <i class="fa-solid fa-chevron-up mr-1 animate-bounce"></i> 導航選單 (滑鼠移至此或觸摸)
+        </div>
+        <button id="btn-goto-input" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
+            <i class="fa-solid fa-pen-to-square text-lg"></i>
+            <span class="text-xs font-medium">心意輸入</span>
+        </button>
+        <button id="btn-goto-display" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
+            <i class="fa-solid fa-tv text-lg"></i>
+            <span class="text-xs font-medium">大屏幕牆</span>
+        </button>
+        <button id="btn-goto-admin" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
+            <i class="fa-solid fa-user-shield text-lg"></i>
+            <span class="text-xs font-medium">老師審核</span>
+        </button>
     </div>
 
-    <div id="input-page" class="page active">
-        <h2>🎓 畢業禮心意牆</h2>
-        <p>為畢業同學送上祝福</p>
-        <div class="input-box">
-            <input type="text" id="senderName" placeholder="你的名字 / 班別" maxlength="15">
-            <textarea id="messageText" rows="4" placeholder="祝福說話 (限50字)..." maxlength="50"></textarea>
-            <button class="send-btn" id="btn-submit">送出心意</button>
+    <!-- ============================================ -->
+    <!-- 頁面 1：學生/家長心意輸入端 -->
+    <!-- ============================================ -->
+    <div id="input-page" class="page min-h-screen flex flex-col justify-between py-8 px-4 bg-slate-50 md:px-8">
+        <div class="max-w-5xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <!-- 表單輸入側 -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <div class="text-center lg:text-left">
+                    <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full uppercase tracking-wider">Graduation 2026</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mt-2">🎓 畢業禮祝福心意牆</h2>
+                    <p class="text-slate-500 mt-1">寫下珍貴的祝福，您的心意將在禮堂大屏幕實時綻放！</p>
+                </div>
+
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 flex flex-col gap-5">
+                    <!-- 名字與班別 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fa-solid fa-user-graduate mr-1 text-indigo-500"></i> 你的名字 / 班別
+                        </label>
+                        <input type="text" id="senderName" placeholder="例如：張小明 6A班 / 陳媽媽" maxlength="15" 
+                               class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base">
+                    </div>
+
+                    <!-- 快速賀詞推薦 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1 text-amber-500"></i> 快捷祝賀語 (點擊自動填寫)
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-tag px-3 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-lg text-xs font-medium transition-colors">🎓 畢業快樂，前程似錦！</button>
+                            <button class="quick-tag px-3 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-lg text-xs font-medium transition-colors">🚀 揚帆起航，勇敢追夢！</button>
+                            <button class="quick-tag px-3 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-lg text-xs font-medium transition-colors">👩‍🏫 感謝老師悉心教導！</button>
+                            <button class="quick-tag px-3 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-lg text-xs font-medium transition-colors">✨ 願你歷盡千帆，歸來仍是少年！</button>
+                            <button class="quick-tag px-3 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-950 text-slate-700 rounded-lg text-xs font-medium transition-colors">🌟 閃閃發光，做最好的自己！</button>
+                        </div>
+                    </div>
+
+                    <!-- 祝福內容 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">
+                                <i class="fa-solid fa-heart mr-1 text-red-500"></i> 祝福說話 (限 50 字)
+                            </label>
+                            <span id="char-counter" class="text-xs text-slate-400 font-mono">0 / 50</span>
+                        </div>
+                        <textarea id="messageText" rows="3" placeholder="在這裡寫下給畢業同學、老師或摯友的滿滿祝福心意吧..." maxlength="50"
+                                  class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-base resize-none"></textarea>
+                    </div>
+
+                    <!-- 貼紙顏色選擇 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fa-solid fa-palette mr-1 text-emerald-500"></i> 選擇心意卡底色
+                        </label>
+                        <div class="flex gap-3" id="color-picker-container">
+                            <!-- JS將動態生成彩色圓圈按鈕 -->
+                        </div>
+                    </div>
+
+                    <button class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-800 active:from-indigo-900 active:to-indigo-950 text-white rounded-xl text-lg font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform active:scale-[0.98] transition-all flex items-center justify-center gap-2" id="btn-submit">
+                        <i class="fa-solid fa-paper-plane"></i> 送出心意祝福
+                    </button>
+                </div>
+            </div>
+
+            <!-- 實時視覺預覽側 -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center">
+                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-eye mr-1"></i> 實時大屏幕顯示效果預覽
+                </span>
+                <div class="relative w-72 h-72 rounded-2xl flex flex-col justify-between p-6 shadow-2xl border border-black/5 transform rotate-2 transition-all duration-300 tape-effect" id="preview-memo">
+                    <div class="flex-grow">
+                        <p class="text-slate-800 font-medium text-lg leading-relaxed break-words whitespace-pre-wrap font-serif" id="preview-text">祝福說話 (限50字)...</p>
+                    </div>
+                    <div class="border-t border-black/5 pt-3 text-right">
+                        <span class="text-slate-600 font-bold text-sm tracking-wide" id="preview-name">— 你的名字 / 班別</span>
+                    </div>
+                </div>
+                <div class="mt-6 text-center text-xs text-slate-400 max-w-xs">
+                    * 點擊右下角導航，可快速切換到「大屏幕展示」或「老師審核」系統。
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁面底部頁腳 -->
+        <div class="text-center text-xs text-slate-400 mt-8">
+            © 2026 Graduation Day wishes wall. Powered by Google Workspace Integration.
         </div>
     </div>
 
-    <div id="display-page" class="page">
-        <div class="wall-title">2026 Graduation Day Share your Messages and Wishes</div>
-        <div id="wall-container"></div>
+    <!-- ============================================ -->
+    <!-- 頁面 2：大屏幕展示端 -->
+    <!-- ============================================ -->
+    <div id="display-page" class="page min-h-screen bg-wall relative select-none hidden transition-colors duration-700">
+        <!-- 控制與設定區 -->
+        <div class="absolute top-4 right-4 z-40 flex items-center gap-2 bg-slate-950/80 backdrop-filter blur-md px-4 py-2 rounded-xl border border-white/10 text-white shadow-xl">
+            <!-- 幻燈片輪播開關 -->
+            <button id="btn-toggle-carousel" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold transition-all shadow-md">
+                <i class="fa-solid fa-play"></i> <span>啟動自動輪播</span>
+            </button>
+            <div class="h-4 w-[1px] bg-white/20"></div>
+            <!-- 背景切換選項 -->
+            <span class="text-xs text-slate-300 font-semibold"><i class="fa-solid fa-images mr-1"></i> 背景：</span>
+            <select id="bg-selector" class="bg-slate-800 text-white text-xs border border-white/10 rounded px-2 py-1 outline-none cursor-pointer">
+                <option value="bg-wall">極簡白牆</option>
+                <option value="bg-wood">經典木紋板</option>
+                <option value="bg-starry">浩瀚星空</option>
+                <option value="bg-pastel">粉嫩棉花糖</option>
+                <option value="bg-gold">深邃尊貴藍</option>
+            </select>
+            <div class="h-4 w-[1px] bg-white/20"></div>
+            <!-- 全屏按鈕 -->
+            <button id="btn-fullscreen" class="p-1 hover:text-amber-400 transition-colors" title="切換全螢幕">
+                <i class="fa-solid fa-expand text-sm"></i>
+            </button>
+        </div>
+
+        <!-- 主題大型標題 -->
+        <div class="w-full text-center pt-8 pb-4 px-4 flex flex-col items-center justify-center">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 tracking-wider flex items-center gap-3 drop-shadow-md" id="display-main-title">
+                🎓 2026 畢業禮心意牆
+            </h1>
+            <p class="text-slate-600 font-bold text-sm md:text-lg uppercase tracking-widest mt-2" id="display-sub-title">
+                2026 Graduation Day - Share your Messages and Wishes
+            </p>
+        </div>
+
+        <!-- 實時動態卡片貼牆容器 -->
+        <div id="wall-container" class="relative w-full h-[calc(100vh-140px)] overflow-hidden">
+            <!-- 卡片會動態加載並通過絕對定位飄散在此處 -->
+        </div>
+
+        <!-- 空牆提示 -->
+        <div id="empty-wall-tip" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 text-slate-400">
+            <i class="fa-solid fa-heart-crack text-6xl animate-pulse text-indigo-400/60"></i>
+            <span class="text-lg font-medium text-slate-400/80">牆上暫時空空的，快去寫下第一條祝福吧！</span>
+        </div>
     </div>
 
-<div id="admin-page" class="page" style="padding: 40px 20px; overflow-y: auto; background: #fff; box-sizing: border-box;">
-        <h2>📋 老師審核控制台 (密碼驗證成功)</h2>
-        <hr>
-        
-        <h3 style="color: #e67e22; margin-top: 20px;">⏳ 待審核心意 (Pending)</h3>
-        <div id="admin-list"></div>
-        
-        <br><hr><br>
-        
-        <h3 style="color: #27ae60;">📺 大屏幕現正顯示 (Live)</h3>
-        <div id="admin-approved-list"></div>
+    <!-- ============================================ -->
+    <!-- 頁面 3：管理員審核控制台 -->
+    <!-- ============================================ -->
+    <div id="admin-page" class="page min-h-screen bg-slate-100 p-6 md:p-12 hidden">
+        <div class="max-w-6xl w-full mx-auto flex flex-col gap-8">
+            <!-- 標題與統計 -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-md border border-slate-200/60">
+                <div>
+                    <span class="px-2.5 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full">管理員端</span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-1">📋 老師審核控制中心</h2>
+                    <p class="text-slate-500 text-sm mt-0.5">在這裡批准家長及學生的心意留言，大屏幕將實時響應。</p>
+                </div>
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <!-- 統計資訊 -->
+                    <div class="bg-amber-50 px-4 py-2.5 rounded-xl border border-amber-200 text-center flex-grow md:flex-grow-0">
+                        <span class="block text-xs text-amber-800 font-bold uppercase">待審核</span>
+                        <span id="stat-pending" class="text-2xl font-black text-amber-700">0</span>
+                    </div>
+                    <div class="bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-200 text-center flex-grow md:flex-grow-0">
+                        <span class="block text-xs text-emerald-800 font-bold uppercase">已上架</span>
+                        <span id="stat-approved" class="text-2xl font-black text-emerald-700">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 待審核清單 -->
+                <div class="flex flex-col bg-white rounded-2xl shadow-md border border-slate-200/60 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-amber-50/50 flex justify-between items-center">
+                        <span class="text-base font-bold text-amber-800 flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left"></i> ⏳ 待審核心意 (Pending)
+                        </span>
+                        <button id="btn-approve-all" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-extrabold transition-all shadow-md">
+                            一鍵批准全部
+                        </button>
+                    </div>
+                    <div class="p-6 flex flex-col gap-4 overflow-y-auto max-h-[60vh]" id="admin-pending-list">
+                        <!-- 動態填充待審核卡片 -->
+                    </div>
+                </div>
+
+                <!-- 已批准大屏幕顯示清單 -->
+                <div class="flex flex-col bg-white rounded-2xl shadow-md border border-slate-200/60 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-emerald-50/50 flex justify-between items-center">
+                        <span class="text-base font-bold text-emerald-800 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> 📺 大屏幕現正顯示 (Live)
+                        </span>
+                        <button id="btn-clear-all" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-extrabold transition-all shadow-md">
+                            一鍵清空大屏幕
+                        </button>
+                    </div>
+                    <div class="p-6 flex flex-col gap-4 overflow-y-auto max-h-[60vh]" id="admin-approved-list">
+                        <!-- 動態填充已批准卡片 -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-<script type="module">
-        // 1. 確保這裡完整 import 咗 onChildRemoved，大屏幕先至會識得即時自動清走 Memo
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    <!-- ============================================ -->
+    <!-- 高級自訂彈窗組 (替代 alert / confirm / prompt) -->
+    <!-- ============================================ -->
+    
+    <!-- 1. Custom Alert Modal -->
+    <div id="custom-alert-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-filter blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-slate-100 p-6 flex flex-col items-center text-center gap-4 transform scale-95 transition-transform duration-300">
+            <div id="custom-alert-icon" class="rounded-full p-3 bg-indigo-50">
+                <!-- 圖標將動態生成 -->
+            </div>
+            <p id="custom-alert-text" class="text-slate-800 font-medium text-base mt-2">提示內容</p>
+            <button id="custom-alert-ok" class="w-full mt-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md transition-colors">
+                確認
+            </button>
+        </div>
+    </div>
 
-        // !!! 重要：請填寫你自己的真實 Firebase Config !!!
-        const firebaseConfig = {
-             apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
-              authDomain: "grad-message.firebaseapp.com",
-              databaseURL: "https://grad-message-default-rtdb.firebaseio.com/",
-              projectId: "grad-message",
-              storageBucket: "grad-message.firebasestorage.app",
-              messagingSenderId: "683173524712",
-              appId: "1:683173524712:web:7a9e2479381f80e689c55d",
-              measurementId: "G-7FMV2SFQJ9"
-        };
+    <!-- 2. Custom Confirm Modal -->
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-filter blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-slate-100 p-6 flex flex-col gap-4 transform scale-95 transition-transform duration-300">
+            <div class="flex gap-4 items-start">
+                <div class="rounded-full p-3 bg-rose-50 text-rose-600">
+                    <i class="fa-solid fa-circle-question text-2xl"></i>
+                </div>
+                <div class="flex-grow">
+                    <h4 class="text-slate-900 font-extrabold text-lg">操作確認</h4>
+                    <p id="custom-confirm-text" class="text-slate-500 text-sm mt-1">你確定要執行此操作嗎？</p>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <button id="custom-confirm-no" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors">
+                    取消
+                </button>
+                <button id="custom-confirm-yes" class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold shadow-md transition-colors">
+                    確認執行
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Custom Prompt Modal -->
+    <div id="custom-prompt-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center p-4 bg-slate-950/60 backdrop-filter blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-100 p-6 flex flex-col gap-4 transform scale-95 transition-transform duration-300">
+            <div class="flex gap-4 items-start">
+                <div class="rounded-full p-3 bg-amber-50 text-amber-600">
+                    <i class="fa-solid fa-key text-2xl"></i>
+                </div>
+                <div class="flex-grow">
+                    <h4 class="text-slate-900 font-extrabold text-lg">安全驗證</h4>
+                    <p id="custom-prompt-text" class="text-slate-500 text-sm mt-1">請輸入存取密碼</p>
+                </div>
+            </div>
+            <input type="password" id="custom-prompt-input" placeholder="請在此處輸入密碼" 
+                   class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-base">
+            <div class="flex gap-3 mt-4">
+                <button id="custom-prompt-cancel" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors">
+                    取消
+                </button>
+                <button id="custom-prompt-submit" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md transition-colors">
+                    登入驗證
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================ -->
+    <!-- 核心數據交互腳本 (Firebase Firestore v11.6.1) -->
+    <!-- ============================================ -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ----------------------------------------------------
+        // 系統預置參數與配置
+        // ----------------------------------------------------
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'grad-wishes-wall-2026';
+        
+        // 優先使用系統提供的注入配置，否則回退到專屬 Firebase Config
+        const firebaseConfig = typeof __firebase_config !== 'undefined'
+            ? JSON.parse(__firebase_config)
+            : {
+                apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
+                authDomain: "grad-message.firebaseapp.com",
+                projectId: "grad-message",
+                storageBucket: "grad-message.firebasestorage.app",
+                messagingSenderId: "683173524712",
+                appId: "1:683173524712:web:7a9e2479381f80e689c55d"
+            };
 
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
-        const ADMIN_PASSWORD = "ydss"; 
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        // --- 頁面切換功能 ---
-        function executePageChange(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById(id);
-            if (targetPage) {
-                targetPage.classList.add('active');
+        // 心意卡貼紙主題顏色庫 (高質感知性配色)
+        const memoColors = [
+            { id: 'yellow', name: '暖心黃', value: '#FEF08A', dark: '#854D0E', border: '#FEF08A', gradient: 'from-[#FEF08A]/10 to-[#FDE047]/20' },
+            { id: 'pink', name: '櫻花粉', value: '#FBCFE8', dark: '#9D174D', border: '#FBCFE8', gradient: 'from-[#FBCFE8]/10 to-[#F472B6]/20' },
+            { id: 'blue', name: '晴空藍', value: '#BAE6FD', dark: '#075985', border: '#BAE6FD', gradient: 'from-[#BAE6FD]/10 to-[#38BDF8]/20' },
+            { id: 'green', name: '晨曦綠', value: '#BBF7D0', dark: '#166534', border: '#BBF7D0', gradient: 'from-[#BBF7D0]/10 to-[#4ADE80]/20' },
+            { id: 'orange', name: '甜橙橘', value: '#FED7AA', dark: '#9A3412', border: '#FED7AA', gradient: 'from-[#FED7AA]/10 to-[#FB923C]/20' }
+        ];
+
+        let selectedColor = memoColors[0];
+        const ADMIN_PASSWORD = "ydss"; 
+        
+        // 儲存路徑遵守嚴格的 Rule 1
+        const pendingColRef = collection(db, 'artifacts', appId, 'public', 'data', 'pending');
+        const approvedColRef = collection(db, 'artifacts', appId, 'public', 'data', 'approved');
+
+        // ----------------------------------------------------
+        // 自訂交互彈窗核心 Promise 組
+        // ----------------------------------------------------
+        function alertBox(message, type = 'info') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-alert-modal');
+                const text = document.getElementById('custom-alert-text');
+                const okBtn = document.getElementById('custom-alert-ok');
+                const iconDiv = document.getElementById('custom-alert-icon');
+
+                text.textContent = message;
+
+                // 依據類型設置顏色主題
+                if (type === 'success') {
+                    iconDiv.className = 'rounded-full p-3 bg-emerald-50 text-emerald-600';
+                    iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-2xl animate-bounce"></i>';
+                } else if (type === 'error') {
+                    iconDiv.className = 'rounded-full p-3 bg-rose-50 text-rose-600';
+                    iconDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-2xl animate-pulse"></i>';
+                } else {
+                    iconDiv.className = 'rounded-full p-3 bg-indigo-50 text-indigo-600';
+                    iconDiv.innerHTML = '<i class="fa-solid fa-circle-info text-2xl"></i>';
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                const handleClose = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    resolve();
+                };
+
+                okBtn.onclick = handleClose;
+            });
+        }
+
+        function confirmBox(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-confirm-modal');
+                const text = document.getElementById('custom-confirm-text');
+                const yesBtn = document.getElementById('custom-confirm-yes');
+                const noBtn = document.getElementById('custom-confirm-no');
+
+                text.textContent = message;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                const cleanup = (result) => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    yesBtn.onclick = null;
+                    noBtn.onclick = null;
+                    resolve(result);
+                };
+
+                yesBtn.onclick = () => cleanup(true);
+                noBtn.onclick = () => cleanup(false);
+            });
+        }
+
+        function promptBox(message, isPassword = true) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-prompt-modal');
+                const text = document.getElementById('custom-prompt-text');
+                const input = document.getElementById('custom-prompt-input');
+                const submitBtn = document.getElementById('custom-prompt-submit');
+                const cancelBtn = document.getElementById('custom-prompt-cancel');
+
+                text.textContent = message;
+                input.value = '';
+                input.type = isPassword ? 'password' : 'text';
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                input.focus();
+
+                const cleanup = (val) => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    submitBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                    input.onkeydown = null;
+                    resolve(val);
+                };
+
+                submitBtn.onclick = () => cleanup(input.value);
+                cancelBtn.onclick = () => cleanup(null);
+
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') cleanup(input.value);
+                    if (e.key === 'Escape') cleanup(null);
+                };
+            });
+        }
+
+        // ----------------------------------------------------
+        // 安全登入驗證流程 (遵守 Rule 3)
+        // ----------------------------------------------------
+        async function authenticate() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Firebase Authenticated successfully.");
+                initializeListeners();
+            } catch (error) {
+                console.error("Auth error:", error);
+                await alertBox("雲端通道安全驗證失敗，請重新整理頁面！", "error");
             }
         }
 
-        document.getElementById('btn-goto-input').addEventListener('click', () => executePageChange('input-page'));
-        document.getElementById('btn-goto-display').addEventListener('click', () => executePageChange('display-page'));
-        document.getElementById('btn-goto-admin').addEventListener('click', () => {
-            const password = prompt("請輸入管理員密碼：");
-            if (password === ADMIN_PASSWORD) {
-                executePageChange('admin-page');
+        // ----------------------------------------------------
+        // 切換頁面路由
+        // ----------------------------------------------------
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            // 如果切換回展示牆，嘗試重新佈局
+            if (pageId === 'display-page') {
+                reLayoutMemos();
+            }
+        }
+
+        document.getElementById('btn-goto-input').addEventListener('click', () => switchPage('input-page'));
+        document.getElementById('btn-goto-display').addEventListener('click', () => switchPage('display-page'));
+        
+        document.getElementById('btn-goto-admin').addEventListener('click', async () => {
+            const pwd = await promptBox("「教師專屬安全密鑰」審核控制台登入驗證：", true);
+            if (pwd === null) return; // 取消
+            if (pwd === ADMIN_PASSWORD) {
+                switchPage('admin-page');
+                await alertBox("驗證成功，歡迎進入老師審核中心！", "success");
             } else {
-                alert("密碼錯誤，拒絕存取！");
+                await alertBox("密碼錯誤，您無權訪問此模組！", "error");
             }
         });
 
-        // --- 功能：輸入端送出 ---
-        document.getElementById('btn-submit').addEventListener('click', () => {
-            const name = document.getElementById('senderName').value || "有心人";
-            const text = document.getElementById('messageText').value;
-            if(!text) return alert("請輸入內容");
+        // ----------------------------------------------------
+        // 學生輸入端實時預覽功能
+        // ----------------------------------------------------
+        const inputName = document.getElementById('senderName');
+        const inputText = document.getElementById('messageText');
+        const previewName = document.getElementById('preview-name');
+        const previewText = document.getElementById('preview-text');
+        const previewMemo = document.getElementById('preview-memo');
+        const charCounter = document.getElementById('char-counter');
 
-            push(ref(db, 'pending'), {
-                name: name,
-                text: text,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                time: Date.now()
-            }).then(() => {
-                alert("已送出，等待老師審核後顯示！");
-                document.getElementById('messageText').value = "";
+        function updatePreview() {
+            const nameVal = inputName.value.trim();
+            const textVal = inputText.value;
+
+            previewName.textContent = nameVal ? `— ${nameVal}` : '— 你的名字 / 班別';
+            previewText.textContent = textVal ? textVal : '祝福說話 (限50字)...';
+            charCounter.textContent = `${textVal.length} / 50`;
+        }
+
+        inputName.addEventListener('input', updatePreview);
+        inputText.addEventListener('input', updatePreview);
+
+        // 初始化底色選擇器
+        const colorPickerContainer = document.getElementById('color-picker-container');
+        memoColors.forEach(color => {
+            const colorBtn = document.createElement('button');
+            colorBtn.className = `w-8 h-8 rounded-full border-2 transition-transform cursor-pointer transform hover:scale-110 relative ${selectedColor.id === color.id ? 'border-indigo-600 scale-110 ring-2 ring-indigo-300' : 'border-transparent'}`;
+            colorBtn.style.backgroundColor = color.value;
+            colorBtn.title = color.name;
+            
+            colorBtn.addEventListener('click', () => {
+                // 取消之前選中的按鈕邊框
+                document.querySelectorAll('#color-picker-container button').forEach(btn => {
+                    btn.classList.remove('border-indigo-600', 'scale-110', 'ring-2', 'ring-indigo-300');
+                    btn.classList.add('border-transparent');
+                });
+                // 高亮當前按鈕
+                colorBtn.classList.remove('border-transparent');
+                colorBtn.classList.add('border-indigo-600', 'scale-110', 'ring-2', 'ring-indigo-300');
+                
+                selectedColor = color;
+                // 更新預覽貼紙底色
+                previewMemo.style.backgroundColor = color.value;
+                previewMemo.className = `relative w-72 h-72 rounded-2xl flex flex-col justify-between p-6 shadow-2xl border border-black/5 transform rotate-2 transition-all duration-300 tape-effect`;
+                updatePreview();
+            });
+            
+            colorPickerContainer.appendChild(colorBtn);
+        });
+
+        // 快捷賀詞填寫
+        document.querySelectorAll('.quick-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                inputText.value = tag.textContent.replace(/[🎓🚀👩‍🏫✨🌟]\s*/g, '');
+                updatePreview();
             });
         });
 
-        // --- 功能：管理員監聽 pending (待審核) ---
-        onChildAdded(ref(db, 'pending'), (snapshot) => {
-            const data = snapshot.val();
-            const id = snapshot.key;
-            
-            const item = document.createElement('div');
-            item.className = 'admin-item';
-            item.id = `admin-pending-${id}`;
-            
-            const textDiv = document.createElement('div');
-            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
-            
-            const btnGroup = document.createElement('div');
-            btnGroup.style.display = 'flex';
-            btnGroup.style.gap = '10px';
+        // 設定默認預覽卡底色
+        previewMemo.style.backgroundColor = selectedColor.value;
 
-            const approveBtn = document.createElement('button');
-            approveBtn.className = 'approve-btn';
-            approveBtn.innerText = '批准';
-            approveBtn.onclick = () => {
-                push(ref(db, 'approved'), data); 
-                remove(ref(db, `pending/${id}`)); 
-                item.remove();
-            };
-            
-            const rejectBtn = document.createElement('button');
-            rejectBtn.innerText = '拒絕';
-            rejectBtn.style.background = '#e74c3c';
-            rejectBtn.style.color = 'white';
-            rejectBtn.style.padding = '10px 20px';
-            rejectBtn.style.border = 'none';
-            rejectBtn.style.borderRadius = '5px';
-            rejectBtn.style.cursor = 'pointer';
-            
-            rejectBtn.onclick = () => {
-                if(confirm(`確定要拒絕並刪除這條留言嗎？\n"${data.text}"`)) {
-                    remove(ref(db, `pending/${id}`));
-                    item.remove();
-                }
-            };
-            
-            btnGroup.appendChild(approveBtn);
-            btnGroup.appendChild(rejectBtn);
-            item.appendChild(textDiv);
-            item.appendChild(btnGroup);
-            document.getElementById('admin-list').appendChild(item);
+        // ----------------------------------------------------
+        // 送出心意祝福至雲端 (待審核)
+        // ----------------------------------------------------
+        document.getElementById('btn-submit').addEventListener('click', async () => {
+            const name = inputName.value.trim() || "有心人";
+            const text = inputText.value.trim();
+
+            if (!text) {
+                await alertBox("請務必寫下一些祝福說話喔！", "error");
+                return;
+            }
+
+            try {
+                // 送至待審核集合
+                await addDoc(pendingColRef, {
+                    name: name,
+                    text: text,
+                    color: selectedColor.value,
+                    colorId: selectedColor.id,
+                    time: Date.now()
+                });
+
+                await alertBox("您的祝福已成功送出！請等待老師審核通過後，即刻展示在大屏幕上！", "success");
+                
+                // 清空輸入框並還原預覽
+                inputText.value = "";
+                inputName.value = "";
+                updatePreview();
+            } catch (err) {
+                console.error("提交失敗：", err);
+                await alertBox("提交發生了錯誤，請重試！", "error");
+            }
         });
 
-        // --- 功能：管理員監聽 approved (已出街列表) ---
-        onChildAdded(ref(db, 'approved'), (snapshot) => {
-            const data = snapshot.val();
-            const id = snapshot.key;
+        // ----------------------------------------------------
+        // 實時監聽 (老師端 pending 數據流與 live 數據流)
+        // ----------------------------------------------------
+        let pendingData = {};
+        let approvedData = {};
 
-            const liveItem = document.createElement('div');
-            liveItem.className = 'admin-item';
-            liveItem.id = `admin-approved-${id}`;
-            liveItem.style.borderLeft = "5px solid #27ae60";
+        function initializeListeners() {
+            // 1. 監聽待審核心意
+            onSnapshot(pendingColRef, (snapshot) => {
+                pendingData = {};
+                snapshot.forEach(docSnap => {
+                    pendingData[docSnap.id] = docSnap.data();
+                });
+                renderAdminPendingList();
+                updateStats();
+            }, (error) => {
+                console.error("Pending snapshot fetch failed:", error);
+            });
 
-            const textDiv = document.createElement('div');
-            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
+            // 2. 監聽大屏幕現正顯示 (Live) 祝福
+            onSnapshot(approvedColRef, (snapshot) => {
+                approvedData = {};
+                snapshot.forEach(docSnap => {
+                    approvedData[docSnap.id] = docSnap.data();
+                });
+                renderAdminApprovedList();
+                renderWallContainer();
+                updateStats();
+            }, (error) => {
+                console.error("Approved snapshot fetch failed:", error);
+            });
+        }
 
-            const removeBtn = document.createElement('button');
-            removeBtn.innerText = '⚠️ 即時下架';
-            removeBtn.style.background = '#c0392b';
-            removeBtn.style.color = 'white';
-            removeBtn.style.padding = '10px 15px';
-            removeBtn.style.border = 'none';
-            removeBtn.style.borderRadius = '5px';
-            removeBtn.style.cursor = 'pointer';
+        // ----------------------------------------------------
+        // 渲染教師端待審核列表
+        // ----------------------------------------------------
+        function renderAdminPendingList() {
+            const listContainer = document.getElementById('admin-pending-list');
+            listContainer.innerHTML = "";
 
-            removeBtn.onclick = () => {
-                if(confirm(`防手殘安全確認：\n確定要將 "${data.name}" 的留言從大屏幕【即時下架】並永久刪除嗎？`)) {
-                    remove(ref(db, `approved/${id}`)); // 這裡一刪除，下面兩個 onChildRemoved 就會即時觸發更新！
+            const keys = Object.keys(pendingData);
+            if (keys.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-mug-hot text-4xl"></i>
+                        <span>太棒了！所有心意祝福均已審核完畢！</span>
+                    </div>
+                `;
+                return;
+            }
+
+            keys.forEach(id => {
+                const item = pendingData[id];
+                const card = document.createElement('div');
+                card.className = "flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/80 transition-all";
+                
+                // 彩色圓點指示
+                const colObj = memoColors.find(c => c.id === item.colorId) || memoColors[0];
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3 flex-grow">
+                        <span class="w-4 h-4 rounded-full mt-1 shrink-0 shadow" style="background-color: ${item.color}"></span>
+                        <div>
+                            <span class="text-xs text-indigo-600 font-extrabold tracking-wide">[${colObj.name}]</span>
+                            <h5 class="font-extrabold text-slate-800 text-sm mt-0.5">${item.name}：</h5>
+                            <p class="text-slate-600 text-base mt-1 break-words font-serif">${item.text}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto shrink-0 justify-end">
+                        <button data-id="${id}" class="btn-approve px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold flex items-center gap-1 transition-all shadow-sm">
+                            <i class="fa-solid fa-check"></i> 批准
+                        </button>
+                        <button data-id="${id}" class="btn-reject px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-sm font-bold flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-trash-can"></i> 拒絕
+                        </button>
+                    </div>
+                `;
+
+                // 綁定事件
+                card.querySelector('.btn-approve').addEventListener('click', () => approveWish(id));
+                card.querySelector('.btn-reject').addEventListener('click', () => rejectWish(id));
+
+                listContainer.appendChild(card);
+            });
+        }
+
+        // ----------------------------------------------------
+        // 渲染教師端已批准 Live 列表
+        // ----------------------------------------------------
+        function renderAdminApprovedList() {
+            const listContainer = document.getElementById('admin-approved-list');
+            listContainer.innerHTML = "";
+
+            const keys = Object.keys(approvedData);
+            if (keys.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-tv text-4xl"></i>
+                        <span>大屏幕上目前沒有正在顯示的心意祝福。</span>
+                    </div>
+                `;
+                return;
+            }
+
+            keys.forEach(id => {
+                const item = approvedData[id];
+                const card = document.createElement('div');
+                const isPinned = item.pinned || false;
+                
+                card.className = `flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/50 transition-all border-l-4 ${isPinned ? 'border-l-amber-500 bg-amber-50/10' : 'border-l-emerald-500'}`;
+                
+                card.innerHTML = `
+                    <div class="flex items-start gap-3 flex-grow">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h5 class="font-extrabold text-slate-800 text-sm">${item.name}：</h5>
+                                ${isPinned ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-full flex items-center gap-1"><i class="fa-solid fa-thumbtack text-[10px]"></i> VIP/保留</span>' : ''}
+                            </div>
+                            <p class="text-slate-600 text-base mt-1 break-words font-serif">${item.text}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto shrink-0 justify-end mt-2 sm:mt-0">
+                        <button class="btn-pin px-3 py-1.5 ${isPinned ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'} rounded-lg text-xs font-bold flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-thumbtack"></i> ${isPinned ? '取消保留' : '置頂/保留'}
+                        </button>
+                        <button class="btn-remove px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-chevron-down"></i> 下架
+                        </button>
+                    </div>
+                `;
+
+                card.querySelector('.btn-pin').addEventListener('click', () => togglePinWish(id, isPinned));
+                card.querySelector('.btn-remove').addEventListener('click', () => removeApprovedWish(id));
+                listContainer.appendChild(card);
+            });
+        }
+
+        // 更新統計數字
+        function updateStats() {
+            document.getElementById('stat-pending').textContent = Object.keys(pendingData).length;
+            document.getElementById('stat-approved').textContent = Object.keys(approvedData).length;
+        }
+
+        // ----------------------------------------------------
+        // 教師動作：批准、拒絕、下架、一鍵功能
+        // ----------------------------------------------------
+        async function approveWish(id) {
+            const data = pendingData[id];
+            if (!data) return;
+
+            try {
+                // 1. 將資料寫入 approved
+                await addDoc(approvedColRef, data);
+                // 2. 從 pending 移除
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pending', id));
+            } catch (err) {
+                console.error("批准失敗:", err);
+                await alertBox("審核批准時遭遇雲端錯誤，請重試！", "error");
+            }
+        }
+
+        async function rejectWish(id) {
+            const data = pendingData[id];
+            if (!data) return;
+
+            const isConfirm = await confirmBox(`安全確認：您是否要永久拒絕並刪除這條來自「${data.name}」的留言？`);
+            if (isConfirm) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pending', id));
+                } catch (err) {
+                    console.error("刪除失敗:", err);
                 }
-            };
+            }
+        }
 
-            liveItem.appendChild(textDiv);
-            liveItem.appendChild(removeBtn);
-            document.getElementById('admin-approved-list').appendChild(liveItem);
+        async function removeApprovedWish(id) {
+            const data = approvedData[id];
+            if (!data) return;
+
+            const isConfirm = await confirmBox(`下架確認：確定要將「${data.name}」的心意卡即刻從大屏幕永久下架嗎？`);
+            if (isConfirm) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'approved', id));
+                } catch (err) {
+                    console.error("下架失敗:", err);
+                }
+            }
+        }
+
+        async function togglePinWish(id, currentPinnedState) {
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'approved', id), {
+                    pinned: !currentPinnedState
+                });
+            } catch (err) {
+                console.error("置頂狀態更新失敗:", err);
+                await alertBox("更新置頂狀態時遭遇雲端錯誤！", "error");
+            }
+        }
+
+        // 一鍵批准所有
+        document.getElementById('btn-approve-all').addEventListener('click', async () => {
+            const keys = Object.keys(pendingData);
+            if (keys.length === 0) return;
+
+            const isConfirm = await confirmBox(`一鍵操作確認：確定要批准這 ${keys.length} 條留言全部上架大屏幕展示嗎？`);
+            if (isConfirm) {
+                for (const id of keys) {
+                    await approveWish(id);
+                }
+                await alertBox("所有祝福均已批准上架！", "success");
+            }
+        });
+
+        // 一鍵清空大屏幕
+        document.getElementById('btn-clear-all').addEventListener('click', async () => {
+            const keys = Object.keys(approvedData);
+            if (keys.length === 0) return;
+
+            const isConfirm = await confirmBox(`⚠️ 極度危險操作確認：\n確定要一鍵「清空大屏幕」，永久移除牆上這 ${keys.length} 條 Live 心意卡嗎？此操作不可逆轉。`);
+            if (isConfirm) {
+                for (const id of keys) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'approved', id));
+                }
+                await alertBox("大屏幕已完全清空！", "success");
+            }
         });
 
 
-        // ========================================================
-        // 📺 大屏幕專用：實時監聽（免 Refresh、一秒同步關鍵）
-        // ========================================================
+        // ====================================================
+        // 📺 大屏幕核心模組：隨機散落定位與防重疊演算法
+        // ====================================================
+        const activeMemos = {}; // 用於追蹤大屏幕當前的 DOM 元素
 
-        // 大屏幕：當有新留言被批准時，生成 Memo 紙貼上牆
-        onChildAdded(ref(db, 'approved'), (snapshot) => {
-            const data = snapshot.val();
-            const id = snapshot.key;
+        function renderWallContainer() {
+            const wall = document.getElementById('wall-container');
+            const emptyTip = document.getElementById('empty-wall-tip');
+            
+            // 獲取所有已批准資料並按時間降序排序（最新在最前）
+            const allKeys = Object.keys(approvedData);
+            allKeys.sort((a, b) => (approvedData[b].time || 0) - (approvedData[a].time || 0));
 
-            // 如果已經存在同 ID 的 Memo，就不重複生成（防止老師開多個分頁時衝突）
-            if (document.getElementById(`memo-wall-${id}`)) return;
+            if (allKeys.length === 0) {
+                emptyTip.classList.remove('hidden');
+            } else {
+                emptyTip.classList.add('hidden');
+            }
+
+            // 設定普通卡片顯示上限，防止太擁擠。置頂卡片 (VIP) 則永久保留，不受此限制
+            const maxNonPinnedVisible = 20; 
+            const keysToRender = [];
+            let nonPinnedCount = 0;
+
+            allKeys.forEach(id => {
+                const item = approvedData[id];
+                if (item.pinned) {
+                    keysToRender.push(id); // 置頂卡強制保留
+                } else if (nonPinnedCount < maxNonPinnedVisible) {
+                    keysToRender.push(id); // 最新的普通卡保留
+                    nonPinnedCount++;
+                }
+            });
+
+            // 1. 移除不應再顯示的卡片（包括被擠出上限的，或者被下架刪除的）
+            Object.keys(activeMemos).forEach(id => {
+                if (!keysToRender.includes(id)) {
+                    const dom = activeMemos[id];
+                    if (dom) {
+                        dom.style.transition = "all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)";
+                        dom.style.transform = "scale(0) rotate(0deg)";
+                        dom.style.opacity = "0";
+                        setTimeout(() => {
+                            dom.remove();
+                        }, 600);
+                    }
+                    delete activeMemos[id];
+                }
+            });
+
+            // 2. 載入新加入或重新進入顯示範圍的卡片
+            keysToRender.forEach(id => {
+                if (!activeMemos[id]) {
+                    createAndPositionMemo(id, approvedData[id]);
+                } else {
+                    // 如果卡片本身已經在，但置頂狀態改變了，我們需要動態更新它的視覺效果
+                    updateMemoPinnedVisual(id, approvedData[id]);
+                }
+            });
+        }
+
+        function createAndPositionMemo(id, item) {
+            const wall = document.getElementById('wall-container');
 
             const memo = document.createElement('div');
-            memo.className = 'memo';
-            memo.id = `memo-wall-${id}`; 
-            memo.style.backgroundColor = data.color;
+            memo.id = `memo-${id}`;
             
-            const GRID_WIDTH = 240;  
-            const GRID_HEIGHT = 240; 
-            const cols = Math.floor(window.innerWidth / GRID_WIDTH);
-            const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT);
+            const isPinned = item.pinned || false;
+            memo.className = `memo-card w-48 min-h-[190px] md:w-56 md:min-h-[220px] p-5 shadow-lg shadow-black/10 flex flex-col justify-between tape-effect cursor-pointer group hover:scale-105 hover:shadow-2xl hover:z-30 transition-all ${isPinned ? 'pinned-memo' : ''}`;
+            memo.style.backgroundColor = item.color;
+            if (isPinned) {
+                memo.style.zIndex = "25"; // Pinned/VIP cards have slightly higher priority
+            }
+            
+            // 隨機旋轉與位移微調
+            const rot = (Math.random() - 0.5) * 16; // -8度 至 +8度 旋轉角
+            memo.style.setProperty('--random-rot', `${rot}deg`);
+            memo.style.setProperty('--rot-init', `${rot * 0.2}deg`);
+
+            memo.innerHTML = `
+                <!-- 📌 大頭針/置頂標記 -->
+                <div class="pin-icon absolute -top-4 left-1/2 -translate-x-1/2 text-2xl filter drop-shadow transition-transform group-hover:scale-110 ${isPinned ? 'block' : 'hidden'}" style="z-index: 100;">📌</div>
+                
+                <div class="flex-grow">
+                    <p class="text-slate-800 font-serif font-bold text-sm md:text-base leading-relaxed break-words whitespace-pre-wrap">${item.text}</p>
+                </div>
+                <div class="border-t border-black/5 pt-2.5 text-right shrink-0">
+                    <span class="text-slate-600 font-extrabold text-xs md:text-sm tracking-wide">— ${item.name}</span>
+                </div>
+            `;
+
+            // 計算隨機位置
+            const pos = getNonOverlappingPosition();
+            memo.style.left = `${pos.x}px`;
+            memo.style.top = `${pos.y}px`;
+
+            wall.appendChild(memo);
+            activeMemos[id] = memo;
+
+            // 點擊可以主動觸發卡片高亮
+            memo.addEventListener('click', () => {
+                focusMemo(id);
+            });
+        }
+
+        function updateMemoPinnedVisual(id, item) {
+            const memo = activeMemos[id];
+            if (!memo) return;
+
+            const isPinned = item.pinned || false;
+            const pinIcon = memo.querySelector('.pin-icon');
+
+            if (isPinned) {
+                memo.classList.add('pinned-memo');
+                memo.style.zIndex = "25";
+                if (pinIcon) pinIcon.classList.remove('hidden');
+            } else {
+                memo.classList.remove('pinned-memo');
+                memo.style.zIndex = "";
+                if (pinIcon) pinIcon.classList.add('hidden');
+            }
+        }
+
+        // 動態隨機網格防重疊演算法
+        function getNonOverlappingPosition() {
+            const width = window.innerWidth;
+            const height = window.innerHeight - 150; // 扣除大標題高度
+
+            const cardWidth = window.innerWidth < 768 ? 192 : 224;
+            const cardHeight = window.innerWidth < 768 ? 200 : 230;
+
+            const cols = Math.floor(width / (cardWidth + 20)) || 1;
+            const rows = Math.floor(height / (cardHeight + 20)) || 1;
             const totalSlots = cols * rows;
-            
+
+            // 隨機選取網格，再加上亂數微調
             const randomSlot = Math.floor(Math.random() * totalSlots);
             const colIndex = randomSlot % cols;
             const rowIndex = Math.floor(randomSlot / cols);
-            const rot = (Math.random() - 0.5) * 15;
-            const x = colIndex * GRID_WIDTH + 20 + (Math.random() - 0.5) * 60;
-            const y = rowIndex * GRID_HEIGHT + 120 + (Math.random() - 0.5) * 60;
 
-            memo.style.setProperty('--random-rot', `${rot}deg`);
-            memo.style.left = `${x}px`;
-            memo.style.top = `${y}px`;
-            
-            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
-            document.getElementById('wall-container').appendChild(memo);
+            const gridX = colIndex * (cardWidth + 20) + 10;
+            const gridY = rowIndex * (cardHeight + 20) + 20;
+
+            // 增加隨機抖動 (jitter) 以提高生動手寫質感貼牆的視覺效果
+            const jitterX = (Math.random() - 0.5) * 40;
+            const jitterY = (Math.random() - 0.5) * 40;
+
+            // 確保不越過邊界
+            const finalX = Math.max(10, Math.min(width - cardWidth - 15, gridX + jitterX));
+            const finalY = Math.max(10, Math.min(height - cardHeight - 15, gridY + jitterY));
+
+            return { x: finalX, y: finalY };
+        }
+
+        // 窗口尺寸調整時重排 Memos
+        function reLayoutMemos() {
+            Object.keys(activeMemos).forEach(id => {
+                const memo = activeMemos[id];
+                if (memo) {
+                    const pos = getNonOverlappingPosition();
+                    memo.style.left = `${pos.x}px`;
+                    memo.style.top = `${pos.y}px`;
+                }
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            reLayoutMemos();
         });
 
-        // 核心修正：當任何地方執行了「下架」，Firebase 通知大屏幕即時拔走 Memo 紙！
-        onChildRemoved(ref(db, 'approved'), (snapshot) => {
-            const id = snapshot.key;
-            
-            // 1. 大屏幕同步更新：找到張 Memo，播動畫，0.5秒內即時拔走消失！
-            const targetMemo = document.getElementById(`memo-wall-${id}`);
-            if (targetMemo) {
-                targetMemo.style.transition = "all 0.5s ease";
-                targetMemo.style.opacity = "0";
-                targetMemo.style.transform = "scale(0)";
-                setTimeout(() => targetMemo.remove(), 500); 
+        // ----------------------------------------------------
+        // 幻燈片專用功能 (大螢幕自動高亮高顯祝福)
+        // ----------------------------------------------------
+        let carouselIntervalId = null;
+        let isCarouselPlaying = false;
+        let currentFocusIndex = 0;
+        let lastFocusedMemo = null;
+
+        function focusMemo(id) {
+            const memo = activeMemos[id];
+            if (!memo) return;
+
+            // 如果已有聚焦元素，先將其復原
+            if (lastFocusedMemo) {
+                lastFocusedMemo.classList.remove('highlight-focus');
             }
 
-            // 2. 老師控制台同步更新：從現正顯示清單中清走
-            const targetLiveItem = document.getElementById(`admin-approved-${id}`);
-            if (targetLiveItem) {
-                targetLiveItem.remove();
+            // 清理已不再牆上的引用的 class
+            document.querySelectorAll('.highlight-focus').forEach(el => {
+                el.classList.remove('highlight-focus');
+            });
+
+            // 聚焦當前
+            memo.classList.add('highlight-focus');
+            lastFocusedMemo = memo;
+        }
+
+        function unfocusAll() {
+            if (lastFocusedMemo) {
+                lastFocusedMemo.classList.remove('highlight-focus');
+                lastFocusedMemo = null;
+            }
+            document.querySelectorAll('.highlight-focus').forEach(el => {
+                el.classList.remove('highlight-focus');
+            });
+        }
+
+        function playCarouselStep() {
+            const keys = Object.keys(activeMemos);
+            if (keys.length === 0) return;
+
+            if (currentFocusIndex >= keys.length) {
+                currentFocusIndex = 0;
+            }
+
+            const targetId = keys[currentFocusIndex];
+            focusMemo(targetId);
+
+            currentFocusIndex++;
+        }
+
+        function toggleCarousel() {
+            const btn = document.getElementById('btn-toggle-carousel');
+            if (isCarouselPlaying) {
+                // 暫停
+                clearInterval(carouselIntervalId);
+                carouselIntervalId = null;
+                isCarouselPlaying = false;
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> <span>啟動自動輪播</span>`;
+                btn.className = "flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-bold transition-all shadow-md";
+                unfocusAll();
+            } else {
+                // 啟動
+                const keys = Object.keys(activeMemos);
+                if (keys.length === 0) {
+                    alertBox("大屏幕上暫無任何上架心意，無法啟動輪播！", "error");
+                    return;
+                }
+                
+                isCarouselPlaying = true;
+                currentFocusIndex = 0;
+                playCarouselStep(); // 即刻執行第一步
+
+                // 每 5 秒切換一張聚焦卡片
+                carouselIntervalId = setInterval(playCarouselStep, 5000);
+                
+                btn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>暫停自動輪播</span>`;
+                btn.className = "flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 rounded-lg text-xs font-bold transition-all shadow-md animate-pulse";
+            }
+        }
+
+        document.getElementById('btn-toggle-carousel').addEventListener('click', toggleCarousel);
+
+        // 背景動態變更
+        const bgSelector = document.getElementById('bg-selector');
+        const displayPage = document.getElementById('display-page');
+        const displayTitle = document.getElementById('display-main-title');
+        const displaySubTitle = document.getElementById('display-sub-title');
+
+        bgSelector.addEventListener('change', (e) => {
+            const chosenBg = e.target.value;
+            // 清理原有背景 class
+            displayPage.classList.remove('bg-wall', 'bg-wood', 'bg-starry', 'bg-pastel', 'bg-gold');
+            displayPage.classList.add(chosenBg);
+
+            // 適配星空或深色金底的文字顏色
+            if (chosenBg === 'bg-starry' || chosenBg === 'bg-gold') {
+                displayTitle.className = "text-4xl md:text-5xl lg:text-6xl font-black text-amber-400 tracking-wider flex items-center gap-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]";
+                displaySubTitle.className = "text-slate-300 font-bold text-sm md:text-lg uppercase tracking-widest mt-2";
+            } else {
+                displayTitle.className = "text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 tracking-wider flex items-center gap-3 drop-shadow-md";
+                displaySubTitle.className = "text-slate-600 font-bold text-sm md:text-lg uppercase tracking-widest mt-2";
             }
         });
-  
-// ========================================================
-        // 🔒 安全防護：禁用右鍵、F12 及開發者工具快捷鍵
-        // ========================================================
-        
+
+        // ----------------------------------------------------
+        // 全螢幕切換功能支援
+        // ----------------------------------------------------
+        const fullscreenBtn = document.getElementById('btn-fullscreen');
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error("無法切換到全螢幕模式", err);
+                });
+                fullscreenBtn.innerHTML = `<i class="fa-solid fa-compress text-sm"></i>`;
+            } else {
+                document.exitFullscreen();
+                fullscreenBtn.innerHTML = `<i class="fa-solid fa-expand text-sm"></i>`;
+            }
+        });
+
+
+        // ====================================================
+        // 🔒 專業儀式防干擾安全防護 (阻斷非授權操作)
+        // ====================================================
         // 1. 禁用滑鼠右鍵
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            alert("網頁已禁用右鍵功能。");
         });
 
-        // 2. 禁用鍵盤 F12, Ctrl+Shift+I (Windows), Cmd+Alt+I (Mac) 等開發者工具快捷鍵
+        // 2. 阻斷開源工具快捷鍵
         document.addEventListener('keydown', (e) => {
             // F12 鍵
             if (e.key === 'F12') {
@@ -466,16 +1235,20 @@
                 e.preventDefault();
                 return false;
             }
-            // Ctrl + U (直接觀看網頁原始碼)
+            // Ctrl + U (查看網頁原始碼)
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
                 e.preventDefault();
                 return false;
             }
         });
 
+        // ----------------------------------------------------
+        // 啟動自運行模組
+        // ----------------------------------------------------
+        window.onload = function () {
+            authenticate();
+        };
 
-
-</script>
-
+    </script>
 </body>
 </html>
