@@ -3,471 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎓 畢業禮心意牆 - 2026 Graduation Day</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts & FontAwesome Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>畢業禮心意牆</title>
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc;
-            overflow-x: hidden;
+        :root {
+            --bg-color: #eef2f3;
+            --memo-yellow: #fff9a0;
         }
 
-        /* 自訂美化滾動條 */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        /* 導航懸浮條特效 */
-        .nav-hover-bar {
-            transform: translateY(45px);
-            opacity: 0.1;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        .nav-hover-bar:hover {
-            transform: translateY(0);
-            opacity: 1;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.3);
+        body { font-family: "Microsoft JhengHei", sans-serif; margin: 0; overflow: hidden; background: var(--bg-color); }
+        
+        /* 導覽切換 (僅供測試用) */
+      /* --  .nav-debug { position: fixed; bottom: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 5px; }
+        .nav-debug button { cursor: pointer; padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; background: white; font-weight: bold; }
+         --*/
+/* --- 修正後：平時隱藏、Mouse Over 才浮現的控制列 --- */
+        .nav-debug { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            z-index: 9999; 
+            background: rgba(0, 0, 0, 0.1); /* 平時極淡色 */
+            padding: 10px; 
+            border-top-right-radius: 8px; 
+            
+            /* 核心特效：平時拉低 45px，並且變透明 */
+            transform: translateY(45px); 
+            opacity: 0.1; 
+            
+            /* 讓浮現動作有 0.3 秒的順滑動畫效果 */
+            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease; 
         }
 
-        /* 擬真心意卡（Memo）樣式 */
-        .memo-card {
-            position: absolute;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            animation: memoFadeUp 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
-            opacity: 0;
-            transform-origin: center center;
-            border-bottom-right-radius: 40px 14px;
+        /* 當 Mouse 移上去 (Hover) 或者用手指觸摸時，原形畢露 */
+        .nav-debug:hover { 
+            transform: translateY(0); 
+            opacity: 1; 
+            background: rgba(0, 0, 0, 0.8); /* 變深色方便看清 */
         }
 
-        /* 手撕膠帶擬真視覺 */
-        .tape-effect::before {
-            content: "";
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%) rotate(-3deg);
-            width: 85px;
-            height: 24px;
-            background-color: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(1px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-left: 3px dashed rgba(0,0,0,0.08);
-            border-right: 3px dashed rgba(0,0,0,0.08);
-            z-index: 10;
-        }
-
-        @keyframes memoFadeUp {
-            0% {
-                opacity: 0;
-                transform: translateY(40px) scale(0.85) rotate(var(--rot-init, 0deg));
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotate(var(--random-rot, 0deg));
-            }
-        }
-
-        /* 動態背景樣式 */
-        .bg-wood { background: #8B5A2B url('https://www.transparenttextures.com/patterns/dark-wood.png'); }
-        .bg-starry { background: #0B1026 url('https://www.transparenttextures.com/patterns/stardust.png'); }
-        .bg-pastel { background: linear-gradient(135deg, #fef9c3 0%, #fee2e2 50%, #e0f2fe 100%); }
-        .bg-wall { background: #f1f5f9 url('https://www.transparenttextures.com/patterns/white-wall.png'); }
-        .bg-gold { background: radial-gradient(circle, #1e1b4b 0%, #0f172a 100%); }
-
-        /* 置頂 Pinned 卡片樣式 */
-        .pinned-memo {
-            border: 3px solid #fbbf24 !important;
-            box-shadow: 0 0 15px rgba(251, 191, 36, 0.6) !important;
+        .nav-debug button { 
+            cursor: pointer; 
+            padding: 8px 14px; 
+            margin: 2px; 
+            border: none; 
+            border-radius: 6px; 
+            background: white; 
+            font-weight: bold; 
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        .pin-decoration {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            z-index: 50;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        /* 稍微提示老師滑鼠要移去邊度 */
+        .nav-debug::before {
+            content: "◢ 導航選單 (滑鼠移至此處)";
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .page { display: none; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; }
+        .active { display: block; }
+
+        /* --- 1. 輸入端樣式 --- */
+
+/* --- 1. 修正後的手機專用輸入端樣式 --- */
+        #input-page { 
+            background: #f4f7f6; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; /* 頂部對齊，防止手機鍵盤彈出時遮擋內容 */
+            padding: 30px 20px; 
+            box-sizing: border-box;
+            overflow-y: auto; /* 允許垂直滾動，適合矮屏幕手機 */
         }
 
-        /* 確保模態框在最上層 */
-        .modal-container {
-            z-index: 9999;
+        #input-page h2 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            margin-top: 10px;
         }
+
+        #input-page p {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .input-box { 
+            width: 100%; 
+            max-width: 450px; /* 電腦版最大寬度 */
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        /* 放大輸入框，設定 16px 防止 iOS Safari 自動放大網頁 */
+        #senderName, #messageText { 
+            width: 100%;
+            padding: 14px 16px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        /* 輸入框點擊時的高亮效果 */
+        #senderName:focus, #messageText:focus {
+            border-color: #3498db;
+        }
+
+        /* 固定 Textarea 的高度，並防止高度超出手機螢幕 */
+        #messageText {
+            resize: none;
+            min-height: 120px;
+        }
+
+        /* 大按鈕設計，方便手指盲撳 */
+        .send-btn { 
+            width: 100%;
+            padding: 16px; 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 1.1rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊時的藍色高亮陰影 */
+        }
+
+        .send-btn:active {
+            background: #1a252f;
+            transform: scale(0.98); /* 撳落去有微微縮小的按鈕反饋感 */
+        }
+
+        /* --- 2. 大屏幕展示端樣式 --- */
+        #display-page { background: #eef2f3 url('https://www.transparenttextures.com/patterns/white-wall.png'); }
+        .wall-title { position: absolute; width: 100%; text-align: center; top: 20px; font-size: 2.5rem; color: #34495e; z-index: 10; font-weight: bold; }
+        
+        .memo {
+            position: absolute;
+            width: 180px;
+            min-height: 180px;
+            padding: 20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /* 將動畫換成 memoFadeUp，時間拉長到 1.5秒，慢入慢出 */
+            animation: memoFadeUp 1.8s ease-in-out forwards;
+            
+            /* 預設透明度為 0 (隱藏)，等待動畫執行 */
+            opacity: 0;
+            
+         /*   animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;    */
+            word-wrap: break-word;
+            border-bottom-right-radius: 40px 10px;
+        }
+        .memo p { margin: 0; font-size: 1.1rem; line-height: 1.4; color: #333; }
+        .memo span { text-align: right; font-size: 0.85rem; color: #666; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 5px; }
+
+
+
+        @keyframes memoFadeUp {
+            0% { 
+                /* 起始狀態：完全透明，且位置向下飄移 20px */
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            30% {
+                /* 快速浮現出一些形狀 */
+                opacity: 0.3;
+            }
+            100% { 
+                /* 最終狀態：完全顯示，位置回到原點，並且帶有我們之前設定的隨機旋轉 */
+                opacity: 1; 
+                transform: translateY(0) scale(1) rotate(var(--random-rot)); /* 我們稍後會修改 JS 傳遞旋轉值 */
+            }
+        }
+
+        
+
+        /* --- 3. 管理員審核樣式 --- */
+        #admin-page { padding: 40px 20px; overflow-y: auto; background: #fff; box-sizing: border-box; }
+        .admin-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; background: #f9f9f9; }
+        .approve-btn { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
     </style>
 </head>
-<body class="select-none min-h-screen">
+<body>
 
-    <!-- 導航懸浮控制列 -->
-    <div id="nav-bar" class="nav-hover-bar fixed bottom-0 left-0 right-0 mx-auto max-w-xl rounded-t-2xl z-50 px-6 py-4 flex items-center justify-around gap-4 text-white">
-        <div class="absolute top-[-24px] left-1/2 -translate-x-1/2 bg-slate-900 bg-opacity-90 px-4 py-1 rounded-t-lg text-xs font-semibold tracking-wider text-slate-300 pointer-events-none">
-            <i class="fa-solid fa-chevron-up mr-1 animate-bounce"></i> 導航選單
-        </div>
-        <button id="btn-goto-input" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
-            <i class="fa-solid fa-pen-to-square text-lg"></i>
-            <span class="text-xs font-medium">心意輸入</span>
-        </button>
-        <button id="btn-goto-display" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
-            <i class="fa-solid fa-tv text-lg"></i>
-            <span class="text-xs font-medium">大屏幕牆</span>
-        </button>
-        <button id="btn-goto-admin" class="flex flex-col items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1 px-3 rounded-lg hover:bg-white/5">
-            <i class="fa-solid fa-user-shield text-lg"></i>
-            <span class="text-xs font-medium">老師審核</span>
-        </button>
+    <div class="nav-debug">
+        <button id="btn-goto-input">學生/家長輸入</button>
+        <button id="btn-goto-admin">老師審核</button>
+        <button id="btn-goto-display">大屏幕展示</button>
     </div>
 
-    <!-- 頁面 1：輸入端 -->
-    <div id="input-page" class="page min-h-screen flex flex-col justify-between py-8 px-4 bg-slate-50 md:px-8">
-        <div class="max-w-5xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div class="lg:col-span-7 flex flex-col gap-6">
-                <div class="text-center lg:text-left">
-                    <span class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full uppercase tracking-wider">Graduation 2026</span>
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mt-2">🎓 畢業禮祝福心意牆</h2>
-                    <p class="text-slate-500 mt-1">您的心意將在禮堂大屏幕實時綻放！</p>
-                </div>
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 flex flex-col gap-5">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">你的名字 / 班別</label>
-                        <input type="text" id="senderName" placeholder="例如：張小明 6A班" maxlength="15" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-semibold text-slate-700">祝福內容 (限 50 字)</label>
-                            <span id="char-counter" class="text-xs text-slate-400 font-mono">0 / 50</span>
-                        </div>
-                        <textarea id="messageText" rows="3" placeholder="在這裡寫下滿滿祝福..." maxlength="50" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">選擇底色</label>
-                        <div class="flex gap-3" id="color-picker-container"></div>
-                    </div>
-                    <button class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-lg font-bold shadow-lg transition-all" id="btn-submit">
-                        <i class="fa-solid fa-paper-plane mr-2"></i> 送出心意祝福
-                    </button>
-                </div>
-            </div>
-            <div class="lg:col-span-5 flex flex-col items-center justify-center">
-                <div class="relative w-64 h-64 rounded-xl flex flex-col justify-between p-6 shadow-2xl border border-black/5 transform rotate-2 tape-effect" id="preview-memo">
-                    <p class="text-slate-800 font-medium break-words" id="preview-text">祝福預覽...</p>
-                    <div class="border-t border-black/5 pt-2 text-right">
-                        <span class="text-slate-600 font-bold text-xs" id="preview-name">— 你的名字</span>
-                    </div>
-                </div>
-            </div>
+    <div id="input-page" class="page active">
+        <h2>🎓 畢業禮心意牆</h2>
+        <p>為畢業同學送上祝福</p>
+        <div class="input-box">
+            <input type="text" id="senderName" placeholder="你的名字 / 班別" maxlength="15">
+            <textarea id="messageText" rows="4" placeholder="祝福說話 (限50字)..." maxlength="50"></textarea>
+            <button class="send-btn" id="btn-submit">送出心意</button>
         </div>
     </div>
 
-    <!-- 頁面 2：大屏幕牆 -->
-    <div id="display-page" class="page min-h-screen bg-wall relative hidden">
-        <div class="absolute top-4 right-4 z-[60] flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-xl text-white shadow-xl">
-            <select id="bg-selector" class="bg-slate-800 text-white text-xs rounded px-2 py-1 outline-none">
-                <option value="bg-wall">極簡白牆</option>
-                <option value="bg-wood">經典木紋</option>
-                <option value="bg-starry">浩瀚星空</option>
-                <option value="bg-gold">深邃藍</option>
-            </select>
-            <button id="btn-fullscreen" class="p-1 hover:text-amber-400 transition-colors"><i class="fa-solid fa-expand"></i></button>
-        </div>
-        <div class="w-full text-center pt-8 pb-4 relative z-10">
-            <h1 class="text-4xl md:text-5xl font-black text-slate-800" id="display-main-title">2026 Graduation Day Share your Messages and Wishes</h1>
-        </div>
-        <div id="wall-container" class="relative w-full h-[calc(100vh-140px)] overflow-hidden"></div>
-        <div id="empty-wall-tip" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-400 hidden">牆上暫無留言</div>
+    <div id="display-page" class="page">
+        <div class="wall-title">2026 Graduation Day Share your Messages and Wishes</div>
+        <div id="wall-container"></div>
     </div>
 
-    <!-- 頁面 3：管理員審核 -->
-    <div id="admin-page" class="page min-h-screen bg-slate-100 p-6 md:p-12 hidden">
-        <div class="max-w-6xl w-full mx-auto flex flex-col gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-md border flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-800">📋 老師審核控制中心</h2>
-                    <p class="text-slate-500 text-sm">批准或移除心意卡</p>
-                </div>
-                <div class="flex gap-4">
-                    <div class="text-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
-                        <span class="block text-[10px] font-bold text-amber-800">待審核</span>
-                        <span id="stat-pending" class="text-xl font-black text-amber-700">0</span>
-                    </div>
-                    <div class="text-center bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
-                        <span class="block text-[10px] font-bold text-emerald-800">已上架</span>
-                        <span id="stat-approved" class="text-xl font-black text-emerald-700">0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
-                    <div class="p-4 border-b bg-amber-50/50">
-                        <span class="font-bold text-amber-800">⏳ 待審核心意</span>
-                    </div>
-                    <div id="admin-pending-list" class="p-4 flex flex-col gap-3 overflow-y-auto max-h-[60vh]"></div>
-                </div>
-                <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
-                    <div class="p-4 border-b bg-emerald-50/50">
-                        <span class="font-bold text-emerald-800">📺 大屏幕 Live</span>
-                    </div>
-                    <div id="admin-approved-list" class="p-4 flex flex-col gap-3 overflow-y-auto max-h-[60vh]"></div>
-                </div>
-            </div>
-        </div>
+<div id="admin-page" class="page" style="padding: 40px 20px; overflow-y: auto; background: #fff; box-sizing: border-box;">
+        <h2>📋 老師審核控制台 (密碼驗證成功)</h2>
+        <hr>
+        
+        <h3 style="color: #e67e22; margin-top: 20px;">⏳ 待審核心意 (Pending)</h3>
+        <div id="admin-list"></div>
+        
+        <br><hr><br>
+        
+        <h3 style="color: #27ae60;">📺 大屏幕現正顯示 (Live)</h3>
+        <div id="admin-approved-list"></div>
     </div>
 
-    <!-- 模態框組 (Modal Group) -->
-    <div id="modal-overlay" class="fixed inset-0 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm modal-container">
-        <!-- 教師驗證彈窗 -->
-        <div id="custom-prompt-modal" class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 flex-col gap-4 hidden">
-            <h4 class="text-slate-900 font-black text-lg">🔒 教師驗證</h4>
-            <input type="password" id="custom-prompt-input" placeholder="請輸入審核密碼" class="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            <div class="flex gap-3">
-                <button id="custom-prompt-cancel" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold">取消</button>
-                <button id="custom-prompt-submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md">驗證進入</button>
-            </div>
-        </div>
+<script type="module">
+        // 1. 確保這裡完整 import 咗 onChildRemoved，大屏幕先至會識得即時自動清走 Memo
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-        <!-- 提示訊息彈窗 -->
-        <div id="custom-alert-modal" class="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 text-center flex-col gap-4 hidden">
-            <p id="custom-alert-text" class="text-slate-800 font-bold"></p>
-            <button id="custom-alert-ok" class="w-full py-3 bg-slate-800 text-white rounded-xl font-bold">確認</button>
-        </div>
-    </div>
+        // !!! 重要：請填寫你自己的真實 Firebase Config !!!
+        const firebaseConfig = {
+             apiKey: "AIzaSyDsKFoGPd8RapCdMVevU3ml5LfJ0JXuq6w",
+              authDomain: "grad-message.firebaseapp.com",
+              databaseURL: "https://grad-message-default-rtdb.firebaseio.com/",
+              projectId: "grad-message",
+              storageBucket: "grad-message.firebasestorage.app",
+              messagingSenderId: "683173524712",
+              appId: "1:683173524712:web:7a9e2479381f80e689c55d",
+              measurementId: "G-7FMV2SFQJ9"
+        };
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // 初始化 Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'grad-wall-2026';
+        const db = getDatabase(app);
+        const colors = ['#fff9a0', '#ffc2e2', '#a2e1ff', '#b4f0a7', '#ffd3a2'];
+        const ADMIN_PASSWORD = "ydss"; 
 
-        const ADMIN_PWD = "ydss";
-        let isAdminLoggedIn = false;
-        let selectedColor = '#FEF08A';
-        let currentUser = null;
-
-        // 集合引用
-        const pendingCol = collection(db, 'artifacts', appId, 'public', 'data', 'pending');
-        const approvedCol = collection(db, 'artifacts', appId, 'public', 'data', 'approved');
-
-        // 模態框管理系統
-        const overlay = document.getElementById('modal-overlay');
-        const alertModal = document.getElementById('custom-alert-modal');
-        const promptModal = document.getElementById('custom-prompt-modal');
-
-        function hideAllModals() {
-            overlay.classList.replace('flex', 'hidden');
-            alertModal.classList.replace('flex', 'hidden');
-            promptModal.classList.replace('flex', 'hidden');
-        }
-
-        function showAlert(msg) {
-            hideAllModals();
-            document.getElementById('custom-alert-text').textContent = msg;
-            overlay.classList.replace('hidden', 'flex');
-            alertModal.classList.replace('hidden', 'flex');
-            return new Promise(r => document.getElementById('custom-alert-ok').onclick = () => {
-                hideAllModals();
-                r();
-            });
-        }
-
-        async function showPrompt() {
-            if (isAdminLoggedIn) return true;
-            hideAllModals();
-            overlay.classList.replace('hidden', 'flex');
-            promptModal.classList.replace('hidden', 'flex');
-            const input = document.getElementById('custom-prompt-input');
-            input.value = "";
-            input.focus();
-            
-            return new Promise(resolve => {
-                document.getElementById('custom-prompt-submit').onclick = () => {
-                    if (input.value === ADMIN_PWD) {
-                        isAdminLoggedIn = true;
-                        hideAllModals();
-                        resolve(true);
-                    } else {
-                        showAlert("密碼錯誤！");
-                    }
-                };
-                document.getElementById('custom-prompt-cancel').onclick = () => {
-                    hideAllModals();
-                    resolve(false);
-                };
-            });
-        }
-
-        // 初始化與數據流
-        async function initApp() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                onAuthStateChanged(auth, (user) => {
-                    currentUser = user;
-                    if (user) setupListeners();
-                });
-            } catch (error) {
-                console.error("Auth Error:", error);
+        // --- 頁面切換功能 ---
+        function executePageChange(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById(id);
+            if (targetPage) {
+                targetPage.classList.add('active');
             }
         }
 
-        function setupListeners() {
-            if (!currentUser) return;
-
-            onSnapshot(pendingCol, (snap) => {
-                const list = document.getElementById('admin-pending-list');
-                list.innerHTML = "";
-                document.getElementById('stat-pending').textContent = snap.size;
-                snap.forEach(d => {
-                    const item = d.data();
-                    const el = document.createElement('div');
-                    el.className = "p-3 bg-slate-50 border rounded-lg flex justify-between items-center gap-3";
-                    el.innerHTML = `
-                        <div class="overflow-hidden">
-                            <p class="text-xs font-bold text-slate-400">${item.name}</p>
-                            <p class="text-sm truncate">${item.text}</p>
-                        </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs" onclick="window.approve('${d.id}')">批准</button>
-                            <button class="bg-rose-100 text-rose-600 px-3 py-1 rounded-lg text-xs" onclick="window.delPending('${d.id}')">刪除</button>
-                        </div>`;
-                    list.appendChild(el);
-                });
-            }, (err) => console.warn("Listen Error:", err));
-
-            onSnapshot(approvedCol, (snap) => {
-                const list = document.getElementById('admin-approved-list');
-                const wall = document.getElementById('wall-container');
-                list.innerHTML = "";
-                wall.innerHTML = "";
-                document.getElementById('stat-approved').textContent = snap.size;
-                
-                snap.forEach(d => {
-                    const item = { id: d.id, ...d.data() };
-                    const el = document.createElement('div');
-                    el.className = `p-3 border rounded-lg flex justify-between items-center ${item.pinned ? 'bg-amber-50 border-amber-300' : 'bg-white'}`;
-                    el.innerHTML = `
-                        <div class="overflow-hidden">
-                            <p class="text-xs font-bold">${item.name} ${item.pinned ? '📌' : ''}</p>
-                            <p class="text-sm truncate">${item.text}</p>
-                        </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button class="text-xs bg-slate-100 px-2 py-1 rounded" onclick="window.togglePin('${d.id}', ${item.pinned})">${item.pinned ? '取消' : '置頂'}</button>
-                            <button class="text-xs text-rose-500" onclick="window.delApproved('${d.id}')">下架</button>
-                        </div>`;
-                    list.appendChild(el);
-                    createMemo(item);
-                });
-                document.getElementById('empty-wall-tip').classList.toggle('hidden', snap.size > 0);
-            }, (err) => console.warn("Listen Error:", err));
-        }
-
-        function createMemo(item) {
-            const wall = document.getElementById('wall-container');
-            const memo = document.createElement('div');
-            memo.className = `memo-card w-48 p-5 shadow-lg tape-effect ${item.pinned ? 'pinned-memo' : ''}`;
-            memo.style.backgroundColor = item.color;
-            const randomX = Math.random() * (window.innerWidth - 240);
-            const randomY = Math.random() * (window.innerHeight - 300);
-            const rot = (Math.random() - 0.5) * 15;
-            memo.style.left = `${randomX}px`;
-            memo.style.top = `${randomY}px`;
-            memo.style.setProperty('--random-rot', `${rot}deg`);
-            memo.innerHTML = `
-                ${item.pinned ? '<div class="pin-decoration">📌</div>' : ''}
-                <p class="text-slate-800 font-bold text-sm leading-relaxed mb-4 break-words">${item.text}</p>
-                <div class="text-right border-t border-black/5 pt-2">
-                    <span class="text-xs text-slate-500 font-black">— ${item.name}</span>
-                </div>
-            `;
-            wall.appendChild(memo);
-        }
-
-        // Firebase 操作
-        window.approve = async (id) => {
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pending', id);
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-                await addDoc(approvedCol, snap.data());
-                await deleteDoc(docRef);
+        document.getElementById('btn-goto-input').addEventListener('click', () => executePageChange('input-page'));
+        document.getElementById('btn-goto-display').addEventListener('click', () => executePageChange('display-page'));
+        document.getElementById('btn-goto-admin').addEventListener('click', () => {
+            const password = prompt("請輸入管理員密碼：");
+            if (password === ADMIN_PASSWORD) {
+                executePageChange('admin-page');
+            } else {
+                alert("密碼錯誤，拒絕存取！");
             }
-        };
-        window.delPending = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pending', id));
-        window.delApproved = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'approved', id));
-        window.togglePin = async (id, current) => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'approved', id), { pinned: !current });
-
-        // 頁面切換與 UI 邏輯
-        function switchPage(id) {
-            hideAllModals(); // 強制隱藏所有可能導致模糊的模態框
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        document.getElementById('btn-goto-input').onclick = () => switchPage('input-page');
-        document.getElementById('btn-goto-display').onclick = () => switchPage('display-page');
-        document.getElementById('btn-goto-admin').onclick = async () => {
-            if (await showPrompt()) switchPage('admin-page');
-        };
-
-        document.getElementById('btn-submit').onclick = async () => {
-            if (!currentUser) return showAlert("連接中...");
-            const name = document.getElementById('senderName').value.trim() || "匿名同學";
-            const text = document.getElementById('messageText').value.trim();
-            if (!text) return showAlert("請寫下你的祝福");
-            await addDoc(pendingCol, { name, text, color: selectedColor, time: Date.now(), pinned: false });
-            showAlert("發送成功！待審核後就會上架。");
-            document.getElementById('messageText').value = "";
-        };
-
-        // 底色選擇器
-        const colors = ['#FEF08A', '#FBCFE8', '#BAE6FD', '#BBF7D0', '#FED7AA'];
-        const picker = document.getElementById('color-picker-container');
-        colors.forEach(c => {
-            const btn = document.createElement('button');
-            btn.className = "w-8 h-8 rounded-full border-2 border-white shadow-sm";
-            btn.style.backgroundColor = c;
-            btn.onclick = () => {
-                selectedColor = c;
-                document.getElementById('preview-memo').style.backgroundColor = c;
-            };
-            picker.appendChild(btn);
         });
 
-        document.getElementById('bg-selector').onchange = (e) => {
-            document.getElementById('display-page').className = `page min-h-screen relative ${e.target.value}`;
-        };
+        // --- 功能：輸入端送出 ---
+        document.getElementById('btn-submit').addEventListener('click', () => {
+            const name = document.getElementById('senderName').value || "有心人";
+            const text = document.getElementById('messageText').value;
+            if(!text) return alert("請輸入內容");
 
-        document.getElementById('btn-fullscreen').onclick = () => {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        };
+            push(ref(db, 'pending'), {
+                name: name,
+                text: text,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                time: Date.now()
+            }).then(() => {
+                alert("已送出，等待老師審核後顯示！");
+                document.getElementById('messageText').value = "";
+            });
+        });
 
-        initApp();
-    </script>
+        // --- 功能：管理員監聽 pending (待審核) ---
+        onChildAdded(ref(db, 'pending'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+            
+            const item = document.createElement('div');
+            item.className = 'admin-item';
+            item.id = `admin-pending-${id}`;
+            
+            const textDiv = document.createElement('div');
+            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
+            
+            const btnGroup = document.createElement('div');
+            btnGroup.style.display = 'flex';
+            btnGroup.style.gap = '10px';
+
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'approve-btn';
+            approveBtn.innerText = '批准';
+            approveBtn.onclick = () => {
+                push(ref(db, 'approved'), data); 
+                remove(ref(db, `pending/${id}`)); 
+                item.remove();
+            };
+            
+            const rejectBtn = document.createElement('button');
+            rejectBtn.innerText = '拒絕';
+            rejectBtn.style.background = '#e74c3c';
+            rejectBtn.style.color = 'white';
+            rejectBtn.style.padding = '10px 20px';
+            rejectBtn.style.border = 'none';
+            rejectBtn.style.borderRadius = '5px';
+            rejectBtn.style.cursor = 'pointer';
+            
+            rejectBtn.onclick = () => {
+                if(confirm(`確定要拒絕並刪除這條留言嗎？\n"${data.text}"`)) {
+                    remove(ref(db, `pending/${id}`));
+                    item.remove();
+                }
+            };
+            
+            btnGroup.appendChild(approveBtn);
+            btnGroup.appendChild(rejectBtn);
+            item.appendChild(textDiv);
+            item.appendChild(btnGroup);
+            document.getElementById('admin-list').appendChild(item);
+        });
+
+        // --- 功能：管理員監聽 approved (已出街列表) ---
+        onChildAdded(ref(db, 'approved'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+
+            const liveItem = document.createElement('div');
+            liveItem.className = 'admin-item';
+            liveItem.id = `admin-approved-${id}`;
+            liveItem.style.borderLeft = "5px solid #27ae60";
+
+            const textDiv = document.createElement('div');
+            textDiv.innerHTML = `<strong>${data.name}:</strong> ${data.text}`;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.innerText = '⚠️ 即時下架';
+            removeBtn.style.background = '#c0392b';
+            removeBtn.style.color = 'white';
+            removeBtn.style.padding = '10px 15px';
+            removeBtn.style.border = 'none';
+            removeBtn.style.borderRadius = '5px';
+            removeBtn.style.cursor = 'pointer';
+
+            removeBtn.onclick = () => {
+                if(confirm(`防手殘安全確認：\n確定要將 "${data.name}" 的留言從大屏幕【即時下架】並永久刪除嗎？`)) {
+                    remove(ref(db, `approved/${id}`)); // 這裡一刪除，下面兩個 onChildRemoved 就會即時觸發更新！
+                }
+            };
+
+            liveItem.appendChild(textDiv);
+            liveItem.appendChild(removeBtn);
+            document.getElementById('admin-approved-list').appendChild(liveItem);
+        });
+
+
+        // ========================================================
+        // 📺 大屏幕專用：實時監聽（免 Refresh、一秒同步關鍵）
+        // ========================================================
+
+        // 大屏幕：當有新留言被批准時，生成 Memo 紙貼上牆
+        onChildAdded(ref(db, 'approved'), (snapshot) => {
+            const data = snapshot.val();
+            const id = snapshot.key;
+
+            // 如果已經存在同 ID 的 Memo，就不重複生成（防止老師開多個分頁時衝突）
+            if (document.getElementById(`memo-wall-${id}`)) return;
+
+            const memo = document.createElement('div');
+            memo.className = 'memo';
+            memo.id = `memo-wall-${id}`; 
+            memo.style.backgroundColor = data.color;
+            
+            const GRID_WIDTH = 240;  
+            const GRID_HEIGHT = 240; 
+            const cols = Math.floor(window.innerWidth / GRID_WIDTH);
+            const rows = Math.floor((window.innerHeight - 120) / GRID_HEIGHT);
+            const totalSlots = cols * rows;
+            
+            const randomSlot = Math.floor(Math.random() * totalSlots);
+            const colIndex = randomSlot % cols;
+            const rowIndex = Math.floor(randomSlot / cols);
+            const rot = (Math.random() - 0.5) * 15;
+            const x = colIndex * GRID_WIDTH + 20 + (Math.random() - 0.5) * 60;
+            const y = rowIndex * GRID_HEIGHT + 120 + (Math.random() - 0.5) * 60;
+
+            memo.style.setProperty('--random-rot', `${rot}deg`);
+            memo.style.left = `${x}px`;
+            memo.style.top = `${y}px`;
+            
+            memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
+            document.getElementById('wall-container').appendChild(memo);
+        });
+
+        // 核心修正：當任何地方執行了「下架」，Firebase 通知大屏幕即時拔走 Memo 紙！
+        onChildRemoved(ref(db, 'approved'), (snapshot) => {
+            const id = snapshot.key;
+            
+            // 1. 大屏幕同步更新：找到張 Memo，播動畫，0.5秒內即時拔走消失！
+            const targetMemo = document.getElementById(`memo-wall-${id}`);
+            if (targetMemo) {
+                targetMemo.style.transition = "all 0.5s ease";
+                targetMemo.style.opacity = "0";
+                targetMemo.style.transform = "scale(0)";
+                setTimeout(() => targetMemo.remove(), 500); 
+            }
+
+            // 2. 老師控制台同步更新：從現正顯示清單中清走
+            const targetLiveItem = document.getElementById(`admin-approved-${id}`);
+            if (targetLiveItem) {
+                targetLiveItem.remove();
+            }
+        });
+  
+// ========================================================
+        // 🔒 安全防護：禁用右鍵、F12 及開發者工具快捷鍵
+        // ========================================================
+        
+        // 1. 禁用滑鼠右鍵
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            alert("網頁已禁用右鍵功能。");
+        });
+
+        // 2. 禁用鍵盤 F12, Ctrl+Shift+I (Windows), Cmd+Alt+I (Mac) 等開發者工具快捷鍵
+        document.addEventListener('keydown', (e) => {
+            // F12 鍵
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + I 或 Cmd + Alt + I (打開檢查)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + Shift + J (打開 Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl + U (直接觀看網頁原始碼)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+
+
+</script>
+
 </body>
 </html>
