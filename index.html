@@ -425,7 +425,7 @@
         // 📺 大屏幕專用：實時監聽（免 Refresh、一秒同步關鍵）
         // ========================================================
 
-        // 用來記錄目前大屏幕上所有 Memo 的坐標與大小，方便進行重疊計算
+        // 1. 建立一個陣列，用嚟記住目前貼喺牆上嘅 Memo 資料與順序
         const placedMemos = []; 
 
         // 大屏幕：當有新留言被批准時，生成 Memo 紙貼上牆
@@ -436,27 +436,42 @@
             // 如果已經存在同 ID 的 Memo，就不重複生成（防止老師開多個分頁時衝突）
             if (document.getElementById(`memo-wall-${id}`)) return;
 
+            // ------------------------------------------------------------
+            // 🛠️ 核心功能擴充：當螢幕超過 20 張時，自動拔走最舊嗰張
+            // ------------------------------------------------------------
+            if (placedMemos.length >= 20) {
+                // 攞出最舊（最頂/最早貼上）嗰張 Memo 的資料
+                const oldestMemoData = placedMemos.shift(); 
+                const oldestDom = document.getElementById(`memo-wall-${oldestMemoData.id}`);
+                
+                if (oldestDom) {
+                    // 播動畫：0.5秒內即時縮小並透明消失
+                    oldestDom.style.transition = "all 0.5s ease";
+                    oldestDom.style.opacity = "0";
+                    oldestDom.style.transform = "scale(0)";
+                    // 動畫播完後從 HTML 網頁中徹底移除
+                    setTimeout(() => oldestDom.remove(), 500);
+                }
+            }
+            // ------------------------------------------------------------
+
             const memo = document.createElement('div');
             memo.className = 'memo';
             memo.id = `memo-wall-${id}`; 
             memo.style.backgroundColor = data.color;
             
-            // ------------------------------------------------------------
-            // 🛠️ 核心修正：15% 重疊度限制與防撞算法 (其餘結構與 DOM 完全不變)
-            // ------------------------------------------------------------
-            const MEMO_WIDTH = 220;  // 180px width + 40px padding
-            const MEMO_HEIGHT = 220; // 180px min-height + 40px padding
-            const MAX_OVERLAP_FACTOR = 0.15; // 限制重疊面積最大為 15%
+            // --- 15% 重疊度限制與防撞算法 ---
+            const MEMO_WIDTH = 220;  
+            const MEMO_HEIGHT = 220; 
+            const MAX_OVERLAP_FACTOR = 0.15; 
             
             let x = 0, y = 0;
             let attempts = 0;
             let foundSafeSpot = false;
 
-            // 限制最大嘗試次數為 200 次，避免畫面全滿時陷入死循環造成網頁當機
             while (!foundSafeSpot && attempts < 200) {
                 attempts++;
                 
-                // 1. 生成一個隨機坐標（保留原本的網格隨機感與邊距）
                 const GRID_WIDTH = 240;  
                 const GRID_HEIGHT = 240; 
                 const cols = Math.floor(window.innerWidth / GRID_WIDTH);
@@ -470,16 +485,13 @@
                 x = colIndex * GRID_WIDTH + 20 + (Math.random() - 0.5) * 60;
                 y = rowIndex * GRID_HEIGHT + 120 + (Math.random() - 0.5) * 60;
 
-                // 邊界防禦：避免 Memo 飄出螢幕右方或下方
                 if (x + MEMO_WIDTH > window.innerWidth) x = window.innerWidth - MEMO_WIDTH - 20;
                 if (y + MEMO_HEIGHT > window.innerHeight) y = window.innerHeight - MEMO_HEIGHT - 20;
                 if (x < 10) x = 10;
                 if (y < 120) y = 120;
 
-                // 2. 檢查與牆上所有已知 Memo 的重疊比例
                 let hasCollision = false;
                 for (const existing of placedMemos) {
-                    // 計算重疊區域的邊界
                     const xOverlap = Math.max(0, Math.min(x + MEMO_WIDTH, existing.x + MEMO_WIDTH) - Math.max(x, existing.x));
                     const yOverlap = Math.max(0, Math.min(y + MEMO_HEIGHT, existing.y + MEMO_HEIGHT) - Math.max(y, existing.y));
                     
@@ -487,7 +499,6 @@
                         const overlapArea = xOverlap * yOverlap;
                         const memoArea = MEMO_WIDTH * MEMO_HEIGHT;
                         
-                        // 如果重疊面積大於 15%，判定為碰撞，必須重新找位子
                         if (overlapArea / memoArea > MAX_OVERLAP_FACTOR) {
                             hasCollision = true;
                             break; 
@@ -495,15 +506,13 @@
                     }
                 }
 
-                // 如果跟所有人都不會嚴重重疊，這就是我們要的黃金風水寶地
                 if (!hasCollision) {
                     foundSafeSpot = true;
                 }
             }
 
-            // 將定案的坐標存入紀錄陣列，供下一張 Memo 進場時比對
+            // 將新貼上嘅 Memo 資料（連同坐標）推入陣列最尾
             placedMemos.push({ id: id, x: x, y: y });
-            // ------------------------------------------------------------
 
             const rot = (Math.random() - 0.5) * 15;
             memo.style.setProperty('--random-rot', `${rot}deg`);
@@ -513,6 +522,9 @@
             memo.innerHTML = `<p>${data.text}</p><span>— ${data.name}</span>`;
             document.getElementById('wall-container').appendChild(memo);
         });
+
+
+
 
     
 
@@ -540,6 +552,10 @@
             // new add  3. 同步從坐標陣列中拔除，釋放空間讓後續的 Memo 可以貼在這個位置
             const index = placedMemos.findIndex(m => m.id === id);
             if (index !== -1) placedMemos.splice(index, 1);
+
+            // 老師控制台手動下架時，也要同步清除陣列紀錄
+  //          const index = placedMemos.findIndex(m => m.id === id);
+  //          if (index !== -1) placedMemos.splice(index, 1);
 
             
         });
